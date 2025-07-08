@@ -1,0 +1,75 @@
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { ArrowRight, Zap, Target, Users } from "lucide-react"
+
+export function Hero() {
+  return (
+    <section className="relative bg-gradient-to-br from-pawn-bg to-white py-20 lg:py-32">
+      <div className="container mx-auto px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          {/* Logo */}
+          <div className="mb-8">
+            <img src="/logo.png" alt="PawnStaar" className="h-16 w-auto mx-auto" />
+          </div>
+
+          {/* Headline */}
+          <h1 className="text-4xl lg:text-6xl font-bold text-pawn-primary mb-6">
+            Your AI Chess Coach
+            <span className="block text-pawn-accent">& Community</span>
+          </h1>
+
+          {/* Subheadline */}
+          <p className="text-xl lg:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            Revolutionize your chess game with personalized AI coaching, deep game analysis, and an engaging community
+            of players.
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <Button size="lg" className="bg-pawn-primary hover:bg-pawn-primary/90 text-white px-8 py-4 text-lg" asChild>
+              <Link href="/login">
+                Get Started Free
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-pawn-primary text-pawn-primary hover:bg-pawn-primary hover:text-white px-8 py-4 text-lg"
+              asChild
+            >
+              <Link href="/analysis">Try Analysis</Link>
+            </Button>
+          </div>
+
+          {/* Feature highlights */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            <div className="flex flex-col items-center text-center">
+              <div className="bg-pawn-accent/10 p-4 rounded-full mb-4">
+                <Target className="h-8 w-8 text-pawn-accent" />
+              </div>
+              <h3 className="text-lg font-semibold text-pawn-primary mb-2">Personalized Puzzles</h3>
+              <p className="text-gray-600">AI-generated puzzles from your own games and mistakes</p>
+            </div>
+
+            <div className="flex flex-col items-center text-center">
+              <div className="bg-pawn-accent/10 p-4 rounded-full mb-4">
+                <Zap className="h-8 w-8 text-pawn-accent" />
+              </div>
+              <h3 className="text-lg font-semibold text-pawn-primary mb-2">Game Analysis</h3>
+              <p className="text-gray-600">Deep AI analysis of your games with actionable insights</p>
+            </div>
+
+            <div className="flex flex-col items-center text-center">
+              <div className="bg-pawn-accent/10 p-4 rounded-full mb-4">
+                <Users className="h-8 w-8 text-pawn-accent" />
+              </div>
+              <h3 className="text-lg font-semibold text-pawn-primary mb-2">Live Play</h3>
+              <p className="text-gray-600">Play against opponents and improve in real-time</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
