@@ -879,8 +879,8 @@ async def get_import_status(task_id: str):
     }
   ],
   "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase_anon_key"
+    "NEXT_PUBLIC_SUPABASE_URL": "https://okklzwqibdfxiynabkjh.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "***REMOVED_SUPABASE_ANON_KEY***"
   }
 }
 ```
@@ -1011,8 +1011,8 @@ SENTRY_DSN=your-sentry-dsn
 
 **Frontend Environment Variables** (`.env.local`):
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_SUPABASE_URL=https://okklzwqibdfxiynabkjh.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=***REMOVED_SUPABASE_ANON_KEY***
 NEXT_PUBLIC_API_BASE_URL=https://your-backend.railway.app
 ```
 
