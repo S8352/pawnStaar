@@ -10,6 +10,10 @@
     {
       "src": "/api/(.*)",
       "dest": "https://your-backend-url.railway.app/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/apps/frontend/$1"
     }
   ],
   "env": {
