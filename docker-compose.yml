@@ -1,0 +1,54 @@
+services:
+  backend:
+    build: ./apps/backend
+    container_name: pawnstaar_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apps/backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      - DATABASE_URL=postgresql://user:password@db/pawnstaar
+      - SUPABASE_URL=https://okklzwqibdfxiynabkjh.supabase.co
+      - SUPABASE_KEY=***REMOVED_SUPABASE_ANON_KEY***
+      - STOCKFISH_PATH=/usr/games/stockfish
+
+  db:
+    image: postgres:13
+    container_name: pawnstaar_db
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=pawnstaar
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d pawnstaar"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:6.2
+    container_name: pawnstaar_redis
+    ports:
+      - "6379:6379"
+
+  worker:
+    build: ./apps/backend
+    container_name: pawnstaar_worker
+    command: celery -A celery_worker.celery_app worker --loglevel=info
+    volumes:
+      - ./apps/backend:/app
+    depends_on:
+      - backend
+      - redis
+
+volumes:
+  postgres_data:

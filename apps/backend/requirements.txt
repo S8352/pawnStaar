@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+sqlalchemy
+alembic
+psycopg2-binary
+supabase
+python-chess
+stockfish
+celery
+redis
+berserk
+python-multipart
+python-jose[cryptography]
+pydantic-settings
