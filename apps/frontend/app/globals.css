@@ -16,14 +16,21 @@
     --secondary-foreground: 15 23 42;
     --muted: 240 244 248;
     --muted-foreground: 100 116 139;
-    --accent: 255 215 0;
-    --accent-foreground: 30 30 47;
+    --accent: 44 56% 52%;
+    --accent-foreground: 26 26 26;
     --destructive: 239 68 68;
     --destructive-foreground: 248 250 252;
     --border: 226 232 240;
     --input: 226 232 240;
     --ring: 30 30 47;
     --radius: 0.5rem;
+
+    --color-primary: 44 56% 52%;
+    --color-primary-dark: 44 56% 42%;
+    --color-text-dark: 26 26 26;
+    --color-bg-overlay: 0 0 0 / 0.4;
+    --spacing-unit: 8px;
+    --border-radius-default: 6px;
   }
 
   .dark {
@@ -39,8 +46,8 @@
     --secondary-foreground: 248 250 252;
     --muted: 51 65 85;
     --muted-foreground: 148 163 184;
-    --accent: 255 215 0;
-    --accent-foreground: 30 30 47;
+    --accent: 44 56% 52%;
+    --accent-foreground: 26 26 26;
     --destructive: 220 38 38;
     --destructive-foreground: 248 250 252;
     --border: 51 65 85;

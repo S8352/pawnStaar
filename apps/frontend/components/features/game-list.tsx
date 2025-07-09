@@ -115,50 +115,48 @@ export function GameList({ refreshKey }: { refreshKey: number }) {
         ) : games.length === 0 ? (
           <div className="text-center text-gray-500">No games imported yet.</div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {games.map((game) => {
               const pgnData = parsePgnData(game.pgn);
               return (
-                <div key={game.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
+                <Card key={game.id}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
                       <Badge className={getResultColor(pgnData.result)}>{pgnData.result}</Badge>
-                      <span className="font-medium">vs {pgnData.opponent}</span>
-                      <span className="text-sm text-gray-600">({pgnData.opponentRating})</span>
+                      <Button size="sm" variant="outline">
+                        <Eye className="h-4 w-4 mr-2" />
+                        Review
+                      </Button>
                     </div>
-
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
-                      <div className="flex items-center gap-1">
+                    <CardTitle className="pt-2">vs {pgnData.opponent} ({pgnData.opponentRating})</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col gap-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
-                        {pgnData.date}
+                        <span>{pgnData.date}</span>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4" />
-                        {pgnData.timeControl}
+                        <span>{pgnData.timeControl}</span>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-2">
                         <User className="h-4 w-4" />
-                        {pgnData.color}
+                        <span>Playing as {pgnData.color}</span>
                       </div>
                     </div>
-
                     {game.analysis_data && (
-                       <div className="mt-2 text-sm">
-                        <span className="text-gray-600">Analysis: </span>
-                        <span className="text-red-600">{game.analysis_data.blunders} blunders</span>
-                        <span className="text-gray-400"> • </span>
-                        <span className="text-orange-600">{game.analysis_data.mistakes} mistakes</span>
-                        <span className="text-gray-400"> • </span>
-                        <span className="text-yellow-600">{game.analysis_data.inaccuracies} inaccuracies</span>
+                      <div className="mt-4 pt-4 border-t">
+                        <h4 className="font-semibold mb-2">AI Analysis</h4>
+                        <div className="text-sm space-y-1">
+                          <p><span className="font-medium text-red-600">{game.analysis_data.blunders}</span> Blunders</p>
+                          <p><span className="font-medium text-orange-600">{game.analysis_data.mistakes}</span> Mistakes</p>
+                          <p><span className="font-medium text-yellow-600">{game.analysis_data.inaccuracies}</span> Inaccuracies</p>
+                        </div>
                       </div>
                     )}
-                  </div>
-
-                  <Button size="sm" variant="outline">
-                    <Eye className="h-4 w-4 mr-2" />
-                    Review
-                  </Button>
-                </div>
+                  </CardContent>
+                </Card>
               )
             })}
           </div>

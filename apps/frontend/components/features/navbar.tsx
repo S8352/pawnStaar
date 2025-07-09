@@ -89,9 +89,6 @@ export function Navbar() {
                 <Button variant="ghost" asChild>
                   <Link href="/login">Sign In</Link>
                 </Button>
-                <Button asChild className="bg-pawn-primary hover:bg-pawn-primary/90">
-                  <Link href="/login">Get Started</Link>
-                </Button>
               </div>
             )}
           </div>
@@ -123,9 +120,6 @@ export function Navbar() {
                 <div className="flex flex-col space-y-2">
                   <Button variant="ghost" asChild>
                     <Link href="/login">Sign In</Link>
-                  </Button>
-                  <Button asChild className="bg-pawn-primary hover:bg-pawn-primary/90">
-                    <Link href="/login">Get Started</Link>
                   </Button>
                 </div>
               )}

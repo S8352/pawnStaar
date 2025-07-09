@@ -54,14 +54,21 @@ module.exports = {
         },
         // Custom PawnStaar colors
         "pawn-primary": "#1E1E2F",
-        "pawn-accent": "#FFD700",
+        "pawn-accent": "hsl(var(--accent))",
         "pawn-bg": "#F8F9FA",
         "pawn-text": "#1A1A1A",
+        "primary-dark": "hsl(var(--color-primary-dark))",
+        "text-dark": "hsl(var(--color-text-dark))",
+        "bg-overlay": "hsl(var(--color-bg-overlay))",
+      },
+      spacing: {
+        unit: "var(--spacing-unit)",
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        default: "var(--border-radius-default)",
       },
       keyframes: {
         "accordion-down": {
