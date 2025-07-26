@@ -4,10 +4,15 @@ Pytest configuration and fixtures for PawnStaar backend tests
 
 import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import Mock, AsyncMock, patch
 from typing import Generator, AsyncGenerator
 import tempfile
 import os
+
+# Set up test environment variables before any imports
+os.environ.setdefault('DATABASE_URL', 'sqlite:///:memory:')
+os.environ.setdefault('SUPABASE_URL', 'https://test.supabase.co')
+os.environ.setdefault('SUPABASE_ANON_KEY', 'test-key')
 
 # Test fixtures for common test data
 @pytest.fixture
