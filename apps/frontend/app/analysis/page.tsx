@@ -1,3 +1,5 @@
+"use client"
+
 import { useState } from "react"
 import { GameImport } from "@/components/features/game-import"
 import { GameList } from "@/components/features/game-list"
