@@ -35,7 +35,7 @@ export function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3">
             <img src="/logo.png" alt="PawnStaar" className="h-8 w-auto" />
-            <span className="text-xl font-bold text-pawn-primary">PawnStaar</span>
+            <span className="text-xl font-bold text-primary">PawnStaar</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -45,7 +45,7 @@ export function Navbar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="text-gray-600 hover:text-pawn-primary transition-colors"
+                  className="text-gray-600 hover:text-primary transition-colors"
                 >
                   {item.label}
                 </Link>
@@ -110,7 +110,7 @@ export function Navbar() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="text-gray-600 hover:text-pawn-primary transition-colors"
+                    className="text-gray-600 hover:text-primary transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
                     {item.label}

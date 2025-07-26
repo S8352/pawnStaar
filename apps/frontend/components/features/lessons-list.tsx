@@ -57,7 +57,7 @@ export function LessonsList() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-pawn-accent" />
+            <BookOpen className="h-5 w-5 text-accent" />
             Recommended Lessons
           </CardTitle>
           <CardDescription>Curated lessons based on your game analysis and skill level</CardDescription>
@@ -68,9 +68,9 @@ export function LessonsList() {
               <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-semibold text-pawn-primary">{lesson.title}</h3>
+                    <h3 className="font-semibold text-primary">{lesson.title}</h3>
                     {lesson.recommended && (
-                      <Badge variant="secondary" className="bg-pawn-accent/10 text-pawn-accent">
+                      <Badge variant="secondary" className="bg-accent/10 text-accent">
                         Recommended
                       </Badge>
                     )}
@@ -90,7 +90,7 @@ export function LessonsList() {
                     </div>
                   </div>
                 </div>
-                <Button size="sm" className="bg-pawn-primary hover:bg-pawn-primary/90">
+                <Button size="sm">
                   Start Lesson
                   <Play className="ml-2 h-4 w-4" />
                 </Button>

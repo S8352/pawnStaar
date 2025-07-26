@@ -146,18 +146,18 @@ export function LivePlay() {
                   key={control.id}
                   className={`p-4 border rounded-lg cursor-pointer transition-colors ${
                     selectedTimeControl === control.id
-                      ? "border-pawn-accent bg-pawn-accent/5"
+                      ? "border-accent bg-accent/5"
                       : "border-gray-200 hover:border-gray-300"
                   }`}
                   onClick={() => setSelectedTimeControl(control.id)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="bg-pawn-accent/10 p-2 rounded-lg">
-                        <control.icon className="h-5 w-5 text-pawn-accent" />
+                      <div className="bg-accent/10 p-2 rounded-lg">
+                        <control.icon className="h-5 w-5 text-accent" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-pawn-primary">
+                        <h3 className="font-semibold text-primary">
                           {control.name} ({control.time})
                         </h3>
                         <p className="text-sm text-gray-600">{control.description}</p>
@@ -184,7 +184,7 @@ export function LivePlay() {
                 />
               </div>
               <Button
-                className="w-full bg-pawn-primary hover:bg-pawn-primary/90"
+                className="w-full"
                 disabled={!selectedTimeControl || isSearching}
                 onClick={() => selectedTimeControl && handleFindOpponent(selectedTimeControl)}
               >

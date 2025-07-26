@@ -85,19 +85,6 @@ export function GameList({ refreshKey }: { refreshKey: number }) {
     fetchGames()
   }, [fetchGames, refreshKey])
 
-  const getResultColor = (result: string) => {
-    switch (result) {
-      case "Win":
-        return "bg-green-100 text-green-800"
-      case "Loss":
-        return "bg-red-100 text-red-800"
-      case "Draw":
-        return "bg-gray-100 text-gray-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
-
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -122,7 +109,17 @@ export function GameList({ refreshKey }: { refreshKey: number }) {
                 <Card key={game.id}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <Badge className={getResultColor(pgnData.result)}>{pgnData.result}</Badge>
+                      <Badge
+                        variant={
+                          pgnData.result === "Win"
+                            ? "success"
+                            : pgnData.result === "Loss"
+                            ? "destructive"
+                            : "secondary"
+                        }
+                      >
+                        {pgnData.result}
+                      </Badge>
                       <Button size="sm" variant="outline">
                         <Eye className="h-4 w-4 mr-2" />
                         Review
@@ -131,7 +128,7 @@ export function GameList({ refreshKey }: { refreshKey: number }) {
                     <CardTitle className="pt-2">vs {pgnData.opponent} ({pgnData.opponentRating})</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex flex-col gap-2 text-sm text-gray-600">
+                    <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
                         <span>{pgnData.date}</span>
@@ -149,9 +146,9 @@ export function GameList({ refreshKey }: { refreshKey: number }) {
                       <div className="mt-4 pt-4 border-t">
                         <h4 className="font-semibold mb-2">AI Analysis</h4>
                         <div className="text-sm space-y-1">
-                          <p><span className="font-medium text-red-600">{game.analysis_data.blunders}</span> Blunders</p>
-                          <p><span className="font-medium text-orange-600">{game.analysis_data.mistakes}</span> Mistakes</p>
-                          <p><span className="font-medium text-yellow-600">{game.analysis_data.inaccuracies}</span> Inaccuracies</p>
+                          <p><span className="font-medium text-destructive">{game.analysis_data.blunders}</span> Blunders</p>
+                          <p><span className="font-medium text-warning">{game.analysis_data.mistakes}</span> Mistakes</p>
+                          <p><span className="font-medium text-yellow-500">{game.analysis_data.inaccuracies}</span> Inaccuracies</p>
                         </div>
                       </div>
                     )}

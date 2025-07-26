@@ -36,7 +36,7 @@ export function DailyWorkout() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-pawn-accent" />
+            <Target className="h-5 w-5 text-accent" />
             Today's Workout
           </CardTitle>
           <CardDescription>Complete your personalized training to improve your weakest areas</CardDescription>
@@ -46,11 +46,11 @@ export function DailyWorkout() {
             {workoutItems.map((item, index) => (
               <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center gap-4 flex-1">
-                  <div className="bg-pawn-accent/10 p-2 rounded-lg">
-                    <item.icon className="h-5 w-5 text-pawn-accent" />
+                  <div className="bg-accent/10 p-2 rounded-lg">
+                    <item.icon className="h-5 w-5 text-accent" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-pawn-primary">{item.title}</h3>
+                    <h3 className="font-semibold text-primary">{item.title}</h3>
                     <p className="text-sm text-gray-600 mb-2">{item.description}</p>
                     <div className="flex items-center gap-2">
                       <Progress value={item.progress} className="flex-1 max-w-[200px]" />
@@ -63,7 +63,7 @@ export function DailyWorkout() {
                 <Button
                   size="sm"
                   variant={item.progress === 100 ? "outline" : "default"}
-                  className={item.progress === 100 ? "" : "bg-pawn-primary hover:bg-pawn-primary/90"}
+                  className={item.progress === 100 ? "" : ""}
                 >
                   {item.progress === 100 ? "Review" : "Start"}
                   <Play className="ml-2 h-4 w-4" />

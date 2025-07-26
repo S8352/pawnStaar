@@ -4,63 +4,85 @@
 
 @layer base {
   :root {
-    --background: 248 249 250;
-    --foreground: 26 26 26;
-    --card: 255 255 255;
-    --card-foreground: 26 26 26;
-    --popover: 255 255 255;
-    --popover-foreground: 26 26 26;
-    --primary: 30 30 47;
-    --primary-foreground: 255 255 255;
-    --secondary: 240 244 248;
-    --secondary-foreground: 15 23 42;
-    --muted: 240 244 248;
-    --muted-foreground: 100 116 139;
-    --accent: 44 56% 52%;
-    --accent-foreground: 26 26 26;
-    --destructive: 239 68 68;
-    --destructive-foreground: 248 250 252;
-    --border: 226 232 240;
-    --input: 226 232 240;
-    --ring: 30 30 47;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    
+    /* IMPROVED: Better accent color - less harsh */
+    --accent: 43 74% 49%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --success: 142.1 76.2% 36.3%;
+    --success-foreground: 210 40% 98%;
+    --warning: 47.9 95.8% 53.1%;
+    --warning-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
-
-    --color-primary: 44 56% 52%;
-    --color-primary-dark: 44 56% 42%;
-    --color-text-dark: 26 26 26;
-    --color-bg-overlay: 0 0 0 / 0.4;
-    --spacing-unit: 8px;
-    --border-radius-default: 6px;
   }
-
+ 
   .dark {
-    --background: 30 30 47;
-    --foreground: 248 250 252;
-    --card: 30 30 47;
-    --card-foreground: 248 250 252;
-    --popover: 30 30 47;
-    --popover-foreground: 248 250 252;
-    --primary: 248 250 252;
-    --primary-foreground: 30 30 47;
-    --secondary: 51 65 85;
-    --secondary-foreground: 248 250 252;
-    --muted: 51 65 85;
-    --muted-foreground: 148 163 184;
-    --accent: 44 56% 52%;
-    --accent-foreground: 26 26 26;
-    --destructive: 220 38 38;
-    --destructive-foreground: 248 250 252;
-    --border: 51 65 85;
-    --input: 51 65 85;
-    --ring: 255 215 0;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    
+    /* IMPROVED: Slightly brighter for dark mode */
+    --accent: 43 74% 55%;
+    --accent-foreground: 210 40% 98%;
+    
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --success: 142.1 76.2% 36.3%;
+    --success-foreground: 210 40% 98%;
+    --warning: 47.9 95.8% 53.1%;
+    --warning-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 215 20.2% 65.1%;
   }
 }
-
+ 
 @layer base {
   * {
     @apply border-border;
   }
   body {
-    @apply bg-pawn-bg text-pawn-text;
+    @apply bg-background text-foreground;
+  }
+}
+
+/* NEW: Utility classes for consistent patterns */
+@layer utilities {
+  .container-padding {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+  
+  .section-spacing {
+    @apply py-12 md:py-16 lg:py-20;
+  }
+  
+  .text-balance {
+    text-wrap: balance;
   }
 }
