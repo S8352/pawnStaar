@@ -1,1 +1,20 @@
-node_modules
+# Dependencies
+node_modules/
+
+# Python
+venv/
+__pycache__/
+*.pyc
+.coverage
+.pytest_cache/
+
+# Next.js build output
+.next/
+
+# Environment files (keep *.example templates)
+.env
+.env.*
+!.env*.example
+
+# OS
+.DS_Store
