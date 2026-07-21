@@ -209,6 +209,9 @@ class ChessComService:
         except ChessComPlayerNotFoundError:
             logger.info(f"Chess.com player not found: {username}")
             return None
+        except ChessComInvalidDataError:
+            # Validation errors are caller errors, not API failures — let them propagate.
+            raise
         except Exception as e:
             logger.error(f"Error fetching Chess.com profile for {username}: {e}")
             raise ChessComAPIError(f"Failed to fetch profile: {str(e)}") from e
@@ -272,7 +275,7 @@ class ChessComService:
                     continue
                     
             # Sort by date (newest first) and limit
-            games.sort(key=lambda g: g.played_at, reverse=True)
+            games.sort(key=lambda g: g.played_at or datetime.min, reverse=True)
             return games[:filters.max_games]
             
         except Exception as e:
@@ -460,9 +463,9 @@ class ChessComService:
                 return False
                 
         # Date filters
-        if filters.start_date and game.played_at < filters.start_date:
+        if filters.start_date and game.played_at and game.played_at < filters.start_date:
             return False
-        if filters.end_date and game.played_at > filters.end_date:
+        if filters.end_date and game.played_at and game.played_at > filters.end_date:
             return False
             
         return True

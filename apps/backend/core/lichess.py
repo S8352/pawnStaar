@@ -106,13 +106,13 @@ class LichessService:
             export_params = {
                 'max': min(max_games, settings.lichess_max_games_per_import),
                 'rated': kwargs.get('rated', True),
-                'perfType': kwargs.get('perf_types', ['blitz', 'rapid', 'classical', 'bullet']),
+                'perf_type': kwargs.get('perf_types', ['blitz', 'rapid', 'classical', 'bullet']),
                 'since': kwargs.get('since'),
                 'until': kwargs.get('until'),
                 'color': kwargs.get('color'),  # 'white', 'black', or None for both
                 'analysed': kwargs.get('analysed'),
                 'moves': True,  # Include moves in PGN
-                'pgnInJson': False,  # Get PGN as string
+                'pgn_in_json': False,  # Get PGN as string
                 'tags': True,  # Include PGN tags
                 'clocks': True,  # Include clock times
                 'evals': kwargs.get('evals', False),  # Include evaluations if available
@@ -122,7 +122,7 @@ class LichessService:
             # Remove None values
             export_params = {k: v for k, v in export_params.items() if v is not None}
             
-            games_stream = self.client.games.export_by_user(username, **export_params)
+            games_stream = self.client.games.export_by_player(username, **export_params)
             
             games = []
             for game in games_stream:

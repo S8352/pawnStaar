@@ -32,127 +32,123 @@ from core.exceptions import (
 )
 
 
-class TestChessComService:
-    """Test suite for ChessComService class"""
-    
-    @pytest.fixture
-    async def service(self):
-        """Create ChessComService instance for testing"""
-        service = ChessComService()
-        yield service
-        await service.close()
-    
-    @pytest.fixture
-    def mock_profile_response(self):
-        """Mock Chess.com profile API response"""
-        return {
-            "username": "testuser",
-            "name": "Test User",
-            "avatar": "https://images.chess.com/uploads_v1/user/123456.jpg",
-            "country": "https://api.chess.com/pub/country/US",
-            "title": "GM",
-            "followers": 1500,
-            "is_streamer": True,
-            "joined": 1609459200,  # 2021-01-01
-            "last_online": 1640995200  # 2022-01-01
-        }
-    
-    @pytest.fixture
-    def mock_stats_response(self):
-        """Mock Chess.com stats API response"""
-        return {
-            "chess_rapid": {
-                "last": {
-                    "rating": 2100,
-                    "rd": 50,
-                    "date": 1640995200
-                },
-                "record": {
-                    "win": 150,
-                    "loss": 100,
-                    "draw": 50
-                }
+# --- Module-scoped fixtures (shared across all test classes) ---
+@pytest.fixture
+def service():
+    """Create ChessComService instance for testing"""
+    return ChessComService()
+
+@pytest.fixture
+def mock_profile_response():
+    """Mock Chess.com profile API response"""
+    return {
+        "username": "testuser",
+        "name": "Test User",
+        "avatar": "https://images.chess.com/uploads_v1/user/123456.jpg",
+        "country": "https://api.chess.com/pub/country/US",
+        "title": "GM",
+        "followers": 1500,
+        "is_streamer": True,
+        "joined": 1609459200,  # 2021-01-01
+        "last_online": 1640995200  # 2022-01-01
+    }
+
+@pytest.fixture
+def mock_stats_response():
+    """Mock Chess.com stats API response"""
+    return {
+        "chess_rapid": {
+            "last": {
+                "rating": 2100,
+                "rd": 50,
+                "date": 1640995200
             },
-            "chess_blitz": {
-                "last": {
-                    "rating": 2050,
-                    "rd": 45,
-                    "date": 1640995200
-                },
-                "record": {
-                    "win": 200,
-                    "loss": 150,
-                    "draw": 25
-                }
+            "record": {
+                "win": 150,
+                "loss": 100,
+                "draw": 50
+            }
+        },
+        "chess_blitz": {
+            "last": {
+                "rating": 2050,
+                "rd": 45,
+                "date": 1640995200
             },
-            "chess_bullet": {
-                "last": {
-                    "rating": 1950,
-                    "rd": 60,
-                    "date": 1640995200
-                },
-                "record": {
-                    "win": 300,
-                    "loss": 250,
-                    "draw": 10
-                }
+            "record": {
+                "win": 200,
+                "loss": 150,
+                "draw": 25
+            }
+        },
+        "chess_bullet": {
+            "last": {
+                "rating": 1950,
+                "rd": 60,
+                "date": 1640995200
+            },
+            "record": {
+                "win": 300,
+                "loss": 250,
+                "draw": 10
             }
         }
-    
-    @pytest.fixture
-    def mock_archives_response(self):
-        """Mock Chess.com archives API response"""
-        return {
-            "archives": [
-                "https://api.chess.com/pub/player/testuser/games/2023/01",
-                "https://api.chess.com/pub/player/testuser/games/2023/02",
-                "https://api.chess.com/pub/player/testuser/games/2023/03"
-            ]
-        }
-    
-    @pytest.fixture
-    def mock_games_response(self):
-        """Mock Chess.com monthly games API response"""
-        return {
-            "games": [
-                {
-                    "url": "https://www.chess.com/game/live/12345678",
-                    "pgn": '[Event "Live Chess"]\n[Site "Chess.com"]\n[Date "2023.01.15"]\n[Round "-"]\n[White "testuser"]\n[Black "opponent"]\n[Result "1-0"]\n[WhiteElo "2100"]\n[BlackElo "2050"]\n[TimeControl "600+5"]\n[EndTime "1673798400"]\n[Termination "testuser won by checkmate"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3 Nb8 10. d4 Nbd7 1-0',
-                    "time_control": "600+5",
-                    "rated": True,
-                    "rules": "chess",
-                    "white": {
-                        "username": "testuser",
-                        "rating": 2100,
-                        "result": "win"
-                    },
-                    "black": {
-                        "username": "opponent",
-                        "rating": 2050,
-                        "result": "checkmated"
-                    },
-                    "end_time": 1673798400
+    }
+
+@pytest.fixture
+def mock_archives_response():
+    """Mock Chess.com archives API response"""
+    return {
+        "archives": [
+            "https://api.chess.com/pub/player/testuser/games/2023/01",
+            "https://api.chess.com/pub/player/testuser/games/2023/02",
+            "https://api.chess.com/pub/player/testuser/games/2023/03"
+        ]
+    }
+
+@pytest.fixture
+def mock_games_response():
+    """Mock Chess.com monthly games API response"""
+    return {
+        "games": [
+            {
+                "url": "https://www.chess.com/game/live/12345678",
+                "pgn": '[Event "Live Chess"]\n[Site "Chess.com"]\n[Date "2023.01.15"]\n[Round "-"]\n[White "testuser"]\n[Black "opponent"]\n[Result "1-0"]\n[WhiteElo "2100"]\n[BlackElo "2050"]\n[TimeControl "600+5"]\n[EndTime "1673798400"]\n[Termination "testuser won by checkmate"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3 Nb8 10. d4 Nbd7 1-0',
+                "time_control": "600+5",
+                "rated": True,
+                "rules": "chess",
+                "white": {
+                    "username": "testuser",
+                    "rating": 2100,
+                    "result": "win"
                 },
-                {
-                    "url": "https://www.chess.com/game/live/12345679",
-                    "pgn": '[Event "Live Chess"]\n[Site "Chess.com"]\n[Date "2023.01.14"]\n[Round "-"]\n[White "opponent2"]\n[Black "testuser"]\n[Result "0-1"]\n[WhiteElo "2080"]\n[BlackElo "2100"]\n[TimeControl "300"]\n[EndTime "1673712000"]\n[Termination "testuser won on time"]\n\n1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 6. Be2 e5 7. O-O Nc6 8. d5 Ne7 0-1',
-                    "time_control": "300",
-                    "rated": True,
-                    "rules": "chess",
-                    "white": {
-                        "username": "opponent2",
-                        "rating": 2080,
-                        "result": "timeout"
-                    },
-                    "black": {
-                        "username": "testuser",
-                        "rating": 2100,
-                        "result": "win"
-                    },
-                    "end_time": 1673712000
-                }
-            ]
-        }
+                "black": {
+                    "username": "opponent",
+                    "rating": 2050,
+                    "result": "checkmated"
+                },
+                "end_time": 1673798400
+            },
+            {
+                "url": "https://www.chess.com/game/live/12345679",
+                "pgn": '[Event "Live Chess"]\n[Site "Chess.com"]\n[Date "2023.01.14"]\n[Round "-"]\n[White "opponent2"]\n[Black "testuser"]\n[Result "0-1"]\n[WhiteElo "2080"]\n[BlackElo "2100"]\n[TimeControl "300"]\n[EndTime "1673712000"]\n[Termination "testuser won on time"]\n\n1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 6. Be2 e5 7. O-O Nc6 8. d5 Ne7 0-1',
+                "time_control": "300",
+                "rated": True,
+                "rules": "chess",
+                "white": {
+                    "username": "opponent2",
+                    "rating": 2080,
+                    "result": "timeout"
+                },
+                "black": {
+                    "username": "testuser",
+                    "rating": 2100,
+                    "result": "win"
+                },
+                "end_time": 1673712000
+            }
+        ]
+    }
 
 
 class TestProfileManagement:
@@ -478,19 +474,17 @@ class TestRateLimiting:
     @pytest.mark.asyncio
     async def test_service_rate_limiting(self, service):
         """Test service-level rate limiting"""
-        with patch.object(service._rate_limiter, 'acquire') as mock_acquire:
-            mock_acquire.return_value = None
-            
-            with patch.object(service, '_ensure_client'):
-                with patch.object(service.client, 'get') as mock_get:
-                    mock_response = MagicMock()
-                    mock_response.status_code = 200
-                    mock_response.json.return_value = {"test": "data"}
-                    mock_get.return_value = mock_response
-                    
-                    await service._make_request("test/endpoint")
-                    
-                    mock_acquire.assert_called_once()
+        with patch.object(service._rate_limiter, 'acquire', new_callable=AsyncMock) as mock_acquire:
+            with patch.object(service, '_ensure_client', new_callable=AsyncMock):
+                service.client = AsyncMock()
+                mock_response = MagicMock()
+                mock_response.status_code = 200
+                mock_response.json.return_value = {"test": "data"}
+                service.client.get.return_value = mock_response
+
+                await service._make_request("test/endpoint")
+
+                mock_acquire.assert_called_once()
 
 
 class TestErrorHandling:
@@ -499,46 +493,46 @@ class TestErrorHandling:
     @pytest.mark.asyncio
     async def test_http_timeout_error(self, service):
         """Test HTTP timeout handling"""
-        with patch.object(service, '_ensure_client'):
-            with patch.object(service.client, 'get') as mock_get:
-                mock_get.side_effect = httpx.TimeoutException("Timeout")
-                
-                with pytest.raises(ChessComTimeoutError):
-                    await service._make_request("test/endpoint")
+        with patch.object(service, '_ensure_client', new_callable=AsyncMock):
+            service.client = AsyncMock()
+            service.client.get.side_effect = httpx.TimeoutException("Timeout")
+
+            with pytest.raises(ChessComTimeoutError):
+                await service._make_request("test/endpoint")
     
     @pytest.mark.asyncio
     async def test_http_request_error(self, service):
         """Test HTTP request error handling"""
-        with patch.object(service, '_ensure_client'):
-            with patch.object(service.client, 'get') as mock_get:
-                mock_get.side_effect = httpx.RequestError("Connection failed")
-                
-                with pytest.raises(ChessComAPIError):
-                    await service._make_request("test/endpoint")
+        with patch.object(service, '_ensure_client', new_callable=AsyncMock):
+            service.client = AsyncMock()
+            service.client.get.side_effect = httpx.RequestError("Connection failed")
+
+            with pytest.raises(ChessComAPIError):
+                await service._make_request("test/endpoint")
     
     @pytest.mark.asyncio
     async def test_api_error_responses(self, service):
         """Test various API error response codes"""
-        with patch.object(service, '_ensure_client'):
-            with patch.object(service.client, 'get') as mock_get:
-                # Test 404 Not Found
-                mock_response = MagicMock()
-                mock_response.status_code = 404
-                mock_get.return_value = mock_response
-                
-                with pytest.raises(ChessComPlayerNotFoundError):
-                    await service._make_request("player/nonexistent")
-                
-                # Test 429 Rate Limit
-                mock_response.status_code = 429
-                with pytest.raises(ChessComRateLimitError):
-                    await service._make_request("test/endpoint")
-                
-                # Test 500 Server Error
-                mock_response.status_code = 500
-                mock_response.text = "Internal Server Error"
-                with pytest.raises(ChessComAPIError):
-                    await service._make_request("test/endpoint")
+        with patch.object(service, '_ensure_client', new_callable=AsyncMock):
+            service.client = AsyncMock()
+            # Test 404 Not Found
+            mock_response = MagicMock()
+            mock_response.status_code = 404
+            service.client.get.return_value = mock_response
+
+            with pytest.raises(ChessComPlayerNotFoundError):
+                await service._make_request("player/nonexistent")
+
+            # Test 429 Rate Limit
+            mock_response.status_code = 429
+            with pytest.raises(ChessComRateLimitError):
+                await service._make_request("test/endpoint")
+
+            # Test 500 Server Error
+            mock_response.status_code = 500
+            mock_response.text = "Internal Server Error"
+            with pytest.raises(ChessComAPIError):
+                await service._make_request("test/endpoint")
 
 
 class TestDataProcessing:

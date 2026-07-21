@@ -118,7 +118,7 @@ class TestLichessService:
 
     def test_import_games_success(self, lichess_service, mock_chess_pgn_game):
         """Test successful game import"""
-        with patch.object(lichess_service.client.games, 'export_by_user') as mock_export:
+        with patch.object(lichess_service.client.games, 'export_by_player') as mock_export:
             mock_export.return_value = [mock_chess_pgn_game]
             
             result = lichess_service.import_games("testuser", max_games=10)
@@ -135,7 +135,7 @@ class TestLichessService:
 
     def test_import_games_with_filters(self, lichess_service):
         """Test game import with filters"""
-        with patch.object(lichess_service.client.games, 'export_by_user') as mock_export:
+        with patch.object(lichess_service.client.games, 'export_by_player') as mock_export:
             mock_export.return_value = []
             
             lichess_service.import_games(
@@ -148,19 +148,19 @@ class TestLichessService:
                 until=1234567900
             )
             
-            # Verify export_by_user was called with correct parameters
+            # Verify export_by_player was called with correct parameters
             call_args = mock_export.call_args
             assert call_args[0][0] == "testuser"  # username
             assert call_args[1]['max'] == 50
             assert call_args[1]['rated'] is True
-            assert call_args[1]['perfType'] == ['blitz', 'rapid']
+            assert call_args[1]['perf_type'] == ['blitz', 'rapid']
             assert call_args[1]['color'] == 'white'
             assert call_args[1]['since'] == 1234567890
             assert call_args[1]['until'] == 1234567900
 
     def test_import_games_max_limit_enforced(self, lichess_service):
         """Test that max games limit is enforced from settings"""
-        with patch.object(lichess_service.client.games, 'export_by_user') as mock_export:
+        with patch.object(lichess_service.client.games, 'export_by_player') as mock_export:
             mock_export.return_value = []
             
             # Request more than settings allow
@@ -401,7 +401,7 @@ class TestLichessService:
 
     def test_import_games_error_handling(self, lichess_service):
         """Test error handling during game import"""
-        with patch.object(lichess_service.client.games, 'export_by_user') as mock_export:
+        with patch.object(lichess_service.client.games, 'export_by_player') as mock_export:
             mock_export.side_effect = Exception("API Error")
             
             with pytest.raises(LichessAPIError):
@@ -413,7 +413,7 @@ class TestLichessService:
         bad_game = Mock()
         bad_game.headers = {}  # Missing required headers
         
-        with patch.object(lichess_service.client.games, 'export_by_user') as mock_export:
+        with patch.object(lichess_service.client.games, 'export_by_player') as mock_export:
             mock_export.return_value = [mock_chess_pgn_game, bad_game]
             
             result = lichess_service.import_games("testuser")
@@ -489,7 +489,7 @@ class TestLichessService:
 
     def test_import_games_empty_result(self, lichess_service):
         """Test game import with no games returned"""
-        with patch.object(lichess_service.client.games, 'export_by_user') as mock_export:
+        with patch.object(lichess_service.client.games, 'export_by_player') as mock_export:
             mock_export.return_value = []
             
             result = lichess_service.import_games("testuser")

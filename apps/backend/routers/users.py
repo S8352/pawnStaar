@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 from supabase import Client
 from core.supabase import get_supabase_client
+from core.config import settings
 from models import User
 from sqlalchemy.orm import Session
 from database import get_db
@@ -478,17 +479,26 @@ async def clear_platform_cache(
 ):
     """Clear platform service cache (admin operation)"""
     try:
-        # TODO: Add admin authorization check
         user_response = supabase.auth.get_user()
-        
+        user = getattr(user_response, "user", None)
+        user_id = getattr(user, "id", None)
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Authentication required")
+
+        if user_id not in settings.admin_user_id_set():
+            raise HTTPException(status_code=403, detail="Admin privileges required")
+
         platform_service = PlatformService()
         platform_service.clear_cache()
-        
+
         return {
             "message": "Platform cache cleared successfully",
             "timestamp": datetime.now().isoformat()
         }
-        
+
+    except HTTPException:
+        # Preserve intended auth status codes (401/403) instead of masking as 500.
+        raise
     except Exception as e:
         logger.error(f"Cache clear error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to clear cache: {str(e)}")

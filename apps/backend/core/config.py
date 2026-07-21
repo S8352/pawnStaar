@@ -35,6 +35,15 @@ class Settings(BaseSettings):
     supabase_service_key: str = ""
     SENTRY_DSN: Optional[str] = None
 
+    # Authorization: comma-separated Supabase user IDs allowed to perform admin
+    # operations. Empty (the default) means no one is an admin — admin endpoints
+    # fail closed until this is explicitly configured.
+    admin_user_ids: str = ""
+
+    def admin_user_id_set(self) -> set:
+        """Parse admin_user_ids into a set of trimmed, non-empty IDs."""
+        return {uid.strip() for uid in self.admin_user_ids.split(",") if uid.strip()}
+
     class Config:
         env_file = ".env"
 

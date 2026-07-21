@@ -8,7 +8,7 @@ python-chess
 stockfish
 celery
 redis
-berserk
+berserk==0.14.0
 python-multipart
 python-jose[cryptography]
 pydantic

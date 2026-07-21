@@ -241,7 +241,7 @@ class TestMultiPlatformSearchEndpoint:
             mock_service_instance = AsyncMock()
             mock_platform_service.return_value.__aenter__.return_value = mock_service_instance
             
-            mock_service_instance.get_supported_platforms.return_value = ['lichess', 'chess_com']
+            mock_service_instance.get_supported_platforms = MagicMock(return_value=['lichess', 'chess_com'])
             mock_service_instance.search_players.return_value = sample_search_results
             
             platforms = mock_service_instance.get_supported_platforms()
@@ -269,7 +269,7 @@ class TestMultiPlatformSearchEndpoint:
             mock_service_instance = AsyncMock()
             mock_platform_service.return_value.__aenter__.return_value = mock_service_instance
             
-            mock_service_instance.get_supported_platforms.return_value = ['lichess', 'chess_com']
+            mock_service_instance.get_supported_platforms = MagicMock(return_value=['lichess', 'chess_com'])
             mock_service_instance.search_players.return_value = search_results
             
             results = await mock_service_instance.search_players('testuser')
@@ -553,7 +553,7 @@ class TestPlatformInfoEndpoints:
             mock_service_instance = MagicMock()
             mock_platform_service.return_value = mock_service_instance
             
-            mock_service_instance.get_supported_platforms.return_value = ['lichess', 'chess_com']
+            mock_service_instance.get_supported_platforms = MagicMock(return_value=['lichess', 'chess_com'])
             
             platforms = mock_service_instance.get_supported_platforms()
             
@@ -573,8 +573,8 @@ class TestPlatformInfoEndpoints:
                 'cache_ttl': 300
             }
             
-            mock_service_instance.get_cache_stats.return_value = mock_cache_stats
-            mock_service_instance.get_supported_platforms.return_value = ['lichess', 'chess_com']
+            mock_service_instance.get_cache_stats = MagicMock(return_value=mock_cache_stats)
+            mock_service_instance.get_supported_platforms = MagicMock(return_value=['lichess', 'chess_com'])
             
             cache_stats = mock_service_instance.get_cache_stats()
             platforms = mock_service_instance.get_supported_platforms()
@@ -595,7 +595,44 @@ class TestPlatformInfoEndpoints:
             # Should not raise any exception
             mock_service_instance.clear_cache()
             mock_service_instance.clear_cache.assert_called_once()
-    
+
+    @pytest.mark.asyncio
+    async def test_clear_platform_cache_denies_non_admin(self):
+        """Non-admin users must be rejected with 403 (endpoint fails closed)."""
+        from routers.users import clear_platform_cache
+        from core.config import settings
+
+        mock_supabase = MagicMock()
+        mock_supabase.auth.get_user.return_value.user.id = "not-admin"
+
+        with patch.object(settings, "admin_user_ids", "admin-123"), \
+             patch("routers.users.PlatformService") as mock_platform_service:
+            with pytest.raises(HTTPException) as exc_info:
+                await clear_platform_cache(supabase=mock_supabase)
+
+            assert exc_info.value.status_code == 403
+            # The admin operation must not run for a non-admin.
+            mock_platform_service.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_clear_platform_cache_allows_admin(self):
+        """An allow-listed admin user succeeds and the cache is cleared."""
+        from routers.users import clear_platform_cache
+        from core.config import settings
+
+        mock_supabase = MagicMock()
+        mock_supabase.auth.get_user.return_value.user.id = "admin-123"
+
+        with patch.object(settings, "admin_user_ids", "admin-123,other-admin"), \
+             patch("routers.users.PlatformService") as mock_platform_service:
+            mock_service_instance = MagicMock()
+            mock_platform_service.return_value = mock_service_instance
+
+            result = await clear_platform_cache(supabase=mock_supabase)
+
+            assert result["message"] == "Platform cache cleared successfully"
+            mock_service_instance.clear_cache.assert_called_once()
+
     @pytest.mark.asyncio
     async def test_platform_health_check_healthy(self):
         """Test platform health check when all platforms are healthy"""
@@ -603,7 +640,7 @@ class TestPlatformInfoEndpoints:
             mock_service_instance = AsyncMock()
             mock_platform_service.return_value.__aenter__.return_value = mock_service_instance
             
-            mock_service_instance.get_supported_platforms.return_value = ['lichess', 'chess_com']
+            mock_service_instance.get_supported_platforms = MagicMock(return_value=['lichess', 'chess_com'])
             mock_service_instance.validate_username.return_value = True
             
             platforms = mock_service_instance.get_supported_platforms()
@@ -638,7 +675,7 @@ class TestPlatformInfoEndpoints:
             mock_service_instance = AsyncMock()
             mock_platform_service.return_value.__aenter__.return_value = mock_service_instance
             
-            mock_service_instance.get_supported_platforms.return_value = ['lichess', 'chess_com']
+            mock_service_instance.get_supported_platforms = MagicMock(return_value=['lichess', 'chess_com'])
             
             # Mock one platform failing
             mock_service_instance.validate_username.side_effect = [
@@ -738,16 +775,28 @@ class TestPerformanceAndIntegration:
             username="testuser",
             display_name="Test User",
             avatar_url="https://lichess1.org/assets/images/icons/t.png",
+            country="US",
+            title=None,
+            followers=0,
+            is_streamer=False,
+            joined_date=None,
+            last_online=None,
             ratings={"blitz": {"rating": 2000}},
             verified=True,
             platform_url="https://lichess.org/@/testuser"
         )
-        
+
         chess_com_profile = UnifiedProfileData(
             platform="chess_com",
             username="testuser",
             display_name="Test User",
             avatar_url="https://example.com/avatar.jpg",
+            country="US",
+            title=None,
+            followers=0,
+            is_streamer=False,
+            joined_date=None,
+            last_online=None,
             ratings={"chess_blitz": {"rating": 2000}},
             verified=True,
             platform_url="https://www.chess.com/member/testuser"
@@ -789,6 +838,12 @@ class TestErrorHandlingScenarios:
                 username="testuser",
                 display_name=None,  # Missing display name
                 avatar_url=None,
+                country=None,
+                title=None,
+                followers=None,
+                is_streamer=False,
+                joined_date=None,
+                last_online=None,
                 ratings=None,  # Missing ratings
                 verified=False,
                 platform_url="https://lichess.org/@/testuser"
