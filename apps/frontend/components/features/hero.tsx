@@ -16,7 +16,6 @@ export function Hero() {
           {/* Headline */}
           <h1 className="text-4xl md:text-6xl font-bold text-primary-foreground mb-6 text-balance">
             Your AI Chess Coach
-            <span className="block text-accent">& Community</span>
           </h1>
 
           {/* Subheadline */}

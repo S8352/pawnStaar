@@ -1,0 +1,186 @@
+# Context Management Rules
+
+## Context Engineering Principles
+
+### Information Prioritization
+
+1. **Immediate Context**: Current task, recent messages, active files
+2. **Relevant Memory**: Past decisions, user preferences, established patterns
+3. **External Knowledge**: Documentation, code references, API specs
+4. **Tool Context**: Available functions, recent tool outputs, system state
+
+### Dynamic Context Assembly
+
+- Build optimal context for each interaction
+- Balance completeness with efficiency
+- Adapt to task complexity and requirements
+- Maintain context continuity across sessions
+
+## Context Window Management
+
+### Token Budget Strategy
+
+```
+Total Context Window: 128,000 tokens
+├── System Prompt: 19,200 tokens (15%)
+├── Core Memory: 32,000 tokens (25%)
+├── Recent Context: 44,800 tokens (35%)
+├── Retrieved Memory: 25,600 tokens (20%)
+└── Tool Definitions: 6,400 tokens (5%)
+```
+
+### Context Compression Techniques
+
+- Summarize long memory blocks
+- Extract key information from verbose content
+- Use bullet points for structured data
+- Prioritize actionable information
+
+### Context Relevance Scoring
+
+```python
+def calculate_relevance_score(memory_block, current_context):
+    score = 0
+    
+    # Recency factor (newer = higher score)
+    age_days = (datetime.now() - memory_block.created).days
+    score += max(0, 10 - age_days * 0.5)
+    
+    # Semantic similarity
+    similarity = cosine_similarity(
+        embed(memory_block.content), 
+        embed(current_context)
+    )
+    score += similarity * 10
+    
+    # User interaction frequency
+    score += memory_block.access_count * 0.1
+    
+    # Category relevance
+    if memory_block.category in current_context.categories:
+        score += 5
+    
+    return score
+```
+
+## Context Assembly Algorithm
+
+### Step 1: Load Core Context
+
+- Always include project overview
+- Load current architecture decisions
+- Include user preferences and standards
+- Add critical domain knowledge
+
+### Step 2: Retrieve Relevant Memory
+
+- Search persistent memory for relevant patterns
+- Score memories by relevance to current task
+- Select top memories within token budget
+- Compress if necessary to fit budget
+
+### Step 3: Add Session Context
+
+- Include current task description
+- Add recent conversation history
+- Include active file contents
+- Add immediate next steps
+
+### Step 4: Supplement with External Knowledge
+
+- Add relevant documentation snippets
+- Include API references if needed
+- Add code examples if relevant
+- Include troubleshooting guides if debugging
+
+## Context Quality Assurance
+
+### Information Validation
+
+- Verify accuracy of retrieved information
+- Check for outdated or conflicting data
+- Ensure completeness of critical context
+- Validate structured format compliance
+
+### Context Efficiency
+
+- Monitor token usage against budget
+- Optimize information density
+- Remove redundant information
+- Compress verbose content
+
+### Context Continuity
+
+- Maintain context across interactions
+- Preserve important decisions and rationale
+- Track context evolution over time
+- Ensure smooth context transitions
+
+## Context Engineering Best Practices
+
+### Chess Platform Specific
+
+- Always include chess domain context
+- Maintain awareness of user personas
+- Consider technical chess implementation needs
+- Include relevant game analysis patterns
+
+### Development Context
+
+- Include current tech stack information
+- Maintain awareness of project structure
+- Consider deployment and scaling needs
+- Include testing and quality assurance context
+
+### User Experience Context
+
+- Maintain awareness of user journey
+- Include feedback and preference patterns
+- Consider accessibility and usability needs
+- Include performance and reliability context
+
+## Context Monitoring and Optimization
+
+### Performance Metrics
+
+- Context assembly time
+- Token utilization efficiency
+- Relevance score distribution
+- User satisfaction with context quality
+
+### Optimization Strategies
+
+- Cache frequently accessed context
+- Pre-compute relevance scores
+- Optimize search algorithms
+- Implement context compression
+
+### Continuous Improvement
+
+- Learn from context usage patterns
+- Adapt to user feedback
+- Optimize based on task success rates
+- Refine relevance scoring algorithms
+
+## Context Security and Privacy
+
+### Information Classification
+
+- Public: General project information
+- Internal: Development patterns and decisions
+- Confidential: User-specific preferences
+- Restricted: Security-related information
+
+### Access Control
+
+- Respect user privacy in context assembly
+- Secure storage of sensitive context
+- Regular security audits
+- Compliance with data protection regulations
+
+### Context Sanitization
+
+- Remove sensitive information when needed
+- Anonymize user-specific data
+- Filter out confidential details
+- Maintain context utility while protecting privacy

@@ -1,0 +1,129 @@
+# Memory Bank Management Rules
+
+## Memory Bank Structure
+
+```
+memory-bank/
+├── core/           # Always in context (project overview, architecture)
+├── persistent/     # Long-term storage (patterns, decisions, preferences)
+├── session/        # Current context (active tasks, recent changes)
+└── external/       # Retrievable resources (docs, references)
+```
+
+## Memory Types and Usage
+
+### Core Memory (Always Loaded)
+
+- Project overview and purpose
+- Architecture decisions and rationale
+- User preferences and coding standards
+- Critical domain knowledge
+
+### Persistent Memory (Long-term Storage)
+
+- Coding patterns and conventions
+- Design decisions and trade-offs
+- User feedback and preferences
+- Performance optimization techniques
+- Error handling patterns
+
+### Session Memory (Current Context)
+
+- Active development tasks
+- Recent changes and decisions
+- Current debugging context
+- Immediate next steps
+
+### External Memory (On-demand Retrieval)
+
+- API documentation
+- Reference materials
+- Historical context
+- Detailed implementation guides
+
+## Memory Operations
+
+### Store Operation
+
+```typescript
+interface MemoryBlock {
+  id: string;
+  type: 'core' | 'persistent' | 'session' | 'external';
+  content: string;
+  metadata: {
+    created: Date;
+    updated: Date;
+    relevanceScore: number;
+    tags: string[];
+    category: string;
+  };
+}
+```
+
+### Retrieve Operation
+
+- Semantic search across memory blocks
+- Relevance scoring based on context
+- Token budget management
+- Context compression when needed
+
+### Update Operation
+
+- Modify existing memory blocks
+- Maintain version history
+- Update relevance scores
+- Preserve important context
+
+### Prune Operation
+
+- Remove outdated information
+- Archive completed tasks
+- Compress similar memories
+- Maintain memory efficiency
+
+## Context Assembly Strategy
+
+### Priority Order
+
+1. Core memory (always included)
+2. Relevant persistent memory (scored by relevance)
+3. Current session context
+4. External knowledge (on-demand)
+
+### Token Budget Allocation
+
+- Core Memory: 25%
+- Recent Context: 35%
+- Retrieved Memory: 20%
+- Tool Definitions: 5%
+- System Prompt: 15%
+
+### Relevance Scoring
+
+- Recency factor (newer = higher score)
+- Semantic similarity to current context
+- User interaction frequency
+- Category relevance to current task
+
+## Quality Assurance
+
+### Memory Validation
+
+- Verify accuracy before storing
+- Check for conflicts with existing memory
+- Validate structured format compliance
+- Ensure proper categorization
+
+### Consistency Maintenance
+
+- Regular cross-reference checks
+- Conflict resolution procedures
+- Version control for important decisions
+- Backup and recovery mechanisms
+
+### Performance Optimization
+
+- Efficient storage and retrieval
+- Context window management
+- Memory compression strategies
+- Cleanup and archival processes

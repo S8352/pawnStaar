@@ -1,0 +1,174 @@
+# Memory Scaffolding Rules for PawnStaar Chess Platform
+
+## Memory Bank Usage Protocol
+
+### Always Execute First
+
+1. **Read Core Memory**: Always read `memory-bank/core/` files to understand project context
+2. **Check Session State**: Review `memory-bank/session/` directory for current task state
+3. **Review Persistent Patterns**: Check `memory-bank/persistent/` directory for established patterns
+
+### Memory Operations
+
+- **Store**: Save important decisions, patterns, user preferences, and architectural choices
+- **Retrieve**: Search memory before making recommendations or implementing features
+- **Update**: Modify existing memory blocks when new information emerges
+- **Prune**: Remove outdated or irrelevant information to maintain efficiency
+
+### Context Engineering Principles
+
+- Prioritize relevant context over complete history
+- Maintain token efficiency while preserving critical information
+- Use structured formats for consistent memory organization
+- Always consider the chess domain context when making decisions
+
+## Project-Specific Memory Guidelines
+
+### Chess Platform Context
+
+- **Domain Knowledge**: This is a chess coaching platform combining AI analysis with community features
+- **Tech Stack**: FastAPI backend, Next.js frontend, Supabase database, React Chess components
+- **Key Features**: Game analysis, personalized training, live play, community features
+- **User Personas**: Aspiring Alex (beginner), Improving Ishaan (intermediate), Competitive Chloe (advanced), Dedicated David (coach)
+
+### Memory Categories
+
+1. **Architecture Decisions**: Framework choices, database design, API structure
+2. **Chess Logic**: Game analysis patterns, training module designs, user experience flows
+3. **User Preferences**: Coding style, feature priorities, design patterns
+4. **Technical Patterns**: Common code patterns, error handling, testing strategies
+5. **Domain Knowledge**: Chess concepts, analysis algorithms, training methodologies
+
+### Memory Storage Format
+
+- Use structured markdown with clear headers
+- Include timestamps and relevance scores
+- Tag memories with appropriate categories
+- Maintain version history for important decisions
+
+### Context Window Management
+
+- **Core Memory**: 25% of context window (project overview, architecture)
+- **Recent Context**: 35% of context window (current session, active tasks)
+- **Retrieved Memory**: 20% of context window (relevant past decisions)
+- **Tool Definitions**: 5% of context window
+- **System Prompt**: 15% of context window
+
+### Memory Retrieval Strategy
+
+1. **Semantic Search**: Find memories related to current task
+2. **Relevance Scoring**: Prioritize by recency, frequency, and semantic similarity
+3. **Context Compression**: Summarize when full content exceeds token budget
+4. **Cross-Reference**: Link related memories for comprehensive understanding
+
+### Quality Assurance
+
+- Verify memory accuracy before storing
+- Update conflicting information immediately
+- Maintain consistency across memory blocks
+- Regular cleanup of outdated information
+
+## Implementation Guidelines
+
+### When to Store Memory
+
+- Architectural decisions and rationale
+- User preferences and coding patterns
+- Successful problem-solving approaches
+- Common error patterns and solutions
+- Feature implementation strategies
+- Performance optimization techniques
+
+### When to Retrieve Memory
+
+- Before implementing new features
+- When encountering similar problems
+- During code reviews and refactoring
+- When making architectural decisions
+- Before suggesting solutions to users
+
+### Memory Update Triggers
+
+- New architectural decisions
+- Changed user preferences
+- Updated project requirements
+- Performance improvements
+- Bug fixes and lessons learned
+
+## Chess-Specific Memory Considerations
+
+### Game Analysis Patterns
+
+- Store successful analysis algorithms
+- Remember user-specific improvement patterns
+- Track effective training module designs
+- Document chess engine integration approaches
+
+### User Experience Patterns
+
+- Store effective onboarding flows
+- Remember user feedback and preferences
+- Track successful feature implementations
+- Document common user pain points
+
+### Technical Chess Implementation
+
+- Store chess position evaluation patterns
+- Remember PGN parsing and validation approaches
+- Track game import and synchronization strategies
+- Document live play implementation patterns
+
+## Memory Maintenance
+
+### Daily Operations
+
+- Review and update session memory
+- Check for new patterns to store
+- Clean up temporary session data
+
+### Weekly Operations
+
+- Archive completed project phases
+- Update persistent memory with new patterns
+- Review and optimize memory organization
+
+### Monthly Operations
+
+- Comprehensive memory cleanup
+- Performance optimization
+- Backup and recovery verification
+
+## Error Handling and Recovery
+
+### Memory System Failures
+
+- Graceful degradation when memory unavailable
+- Fallback to basic context without memory
+- Clear error messages for memory operations
+- Automatic recovery mechanisms
+
+### Data Consistency
+
+- Validate memory integrity regularly
+- Handle conflicting information gracefully
+- Maintain backup copies of critical memory
+- Version control for important decisions
+
+## Security and Privacy
+
+### Memory Access Control
+
+- Respect user privacy in stored information
+- Secure storage of sensitive data
+- Regular security audits of memory system
+- Compliance with data protection regulations
+
+### Information Classification
+
+- Public: General project information
+- Internal: Development patterns and decisions
+- Confidential: User-specific preferences
+- Restricted: Security-related information
+
+Remember: The goal is to create a persistent, intelligent memory system that enables the AI to learn, remember, and improve over time while maintaining the highest quality of assistance for the PawnStaar chess platform development.
+

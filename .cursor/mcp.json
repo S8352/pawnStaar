@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "memory-bank": {
+      "command": "npx",
+      "args": ["-y", "@allpepper/memory-bank-mcp@latest"],
+      "env": {
+        "MEMORY_BANK_ROOT": "./memory-bank"
+      }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem@latest"],
+      "env": {
+        "ALLOWED_DIRECTORIES": "./memory-bank,./apps,./docs"
+      }
+    }
+  }
+}
+

@@ -11,6 +11,7 @@ redis
 berserk
 python-multipart
 python-jose[cryptography]
+pydantic
 pydantic-settings
 httpx>=0.24.0
 pytest>=7.0.0

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, func, ForeignKey, Text, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, func, ForeignKey, Text, Boolean, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -71,3 +71,29 @@ class CoinTransaction(Base):
     created_at = Column(DateTime, default=func.now())
 
     user = relationship("User", back_populates="coin_transactions")
+
+class Character(Base):
+    __tablename__ = 'characters'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(50), nullable=False)  # 'hikaru_nakamura'
+    display_name = Column(String(100), nullable=False)  # 'Hikaru Nakamura'
+    description = Column(Text, nullable=True)
+    personality_config = Column(JSON, nullable=False)  # Roasting templates
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=func.now())
+
+class BotGame(Base):
+    __tablename__ = 'bot_games'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey('users.id'))
+    character_id = Column(Integer, ForeignKey('characters.id'))
+    bot_rating = Column(Integer, nullable=False)  # 800-2500
+    game_result = Column(String, nullable=True)  # 'win', 'loss', 'draw'
+    pgn = Column(Text, nullable=True)
+    current_position = Column(String, nullable=True)  # FEN
+    move_history = Column(JSON, nullable=True)
+    roast_history = Column(JSON, nullable=True)  # Real-time roasts
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=func.now())

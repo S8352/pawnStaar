@@ -9,7 +9,7 @@ import { Analytics } from "@vercel/analytics/react"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "PawnStaar - Your AI Chess Coach & Community",
+  title: "PawnStaar - Your AI Chess Coach",
   description:
     "Revolutionize your chess game with AI-powered coaching, personalized training, and an engaging community platform.",
   keywords: "chess, AI coach, chess training, chess community, chess analysis",
