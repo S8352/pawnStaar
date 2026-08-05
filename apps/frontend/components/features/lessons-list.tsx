@@ -42,13 +42,13 @@ export function LessonsList() {
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case "Beginner":
-        return "bg-green-100 text-green-800"
+        return "bg-success/15 text-success"
       case "Intermediate":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-warning/15 text-warning"
       case "Advanced":
-        return "bg-red-100 text-red-800"
+        return "bg-destructive/15 text-destructive"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-foreground"
     }
   }
 
@@ -75,8 +75,8 @@ export function LessonsList() {
                       </Badge>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600 mb-3">{lesson.description}</p>
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground mb-3">{lesson.description}</p>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
                       {lesson.duration}
@@ -85,7 +85,7 @@ export function LessonsList() {
                       {lesson.difficulty}
                     </Badge>
                     <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4 fill-current text-yellow-500" />
+                      <Star className="h-4 w-4 fill-current text-warning" />
                       {lesson.rating}
                     </div>
                   </div>

@@ -77,7 +77,7 @@ export function WalletDisplay() {
                                 {history.map((item) => (
                                     <li key={item.id} className="border-b py-2 flex justify-between">
                                         <span>{item.description}</span>
-                                        <span className={item.amount > 0 ? 'text-green-500' : 'text-red-500'}>
+                                        <span className={item.amount > 0 ? 'text-success' : 'text-destructive'}>
                                             {item.amount > 0 ? '+' : ''}{item.amount}
                                         </span>
                                     </li>

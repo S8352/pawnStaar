@@ -2,8 +2,12 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { Menu, X, User, Settings, LogOut } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
+import { LogoMark } from "@/components/ui/logo"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,53 +17,68 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
+const NAV_ITEMS = [
+  { href: "/analysis", label: "Analysis" },
+  { href: "/live", label: "Live play" },
+  { href: "/plan", label: "The plan" },
+  { href: "/#pricing", label: "Pricing" },
+]
+
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const pathname = usePathname()
 
   useEffect(() => {
     const token = localStorage.getItem("token")
     setIsLoggedIn(!!token)
   }, [])
 
-  const navItems = [
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/analysis", label: "Analysis" },
-    { href: "/live", label: "Live Play" },
-  ]
+  // Close the mobile sheet on navigation.
+  useEffect(() => setIsOpen(false), [pathname])
+
+  // /login owns its full viewport as a focused split-screen task page and
+  // carries its own logo link home, so it goes without the site chrome.
+  if (pathname === "/login") return null
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-3">
-            <img src="/logo.png" alt="PawnStaar" className="h-8 w-auto" />
-            <span className="text-xl font-bold text-primary">PawnStaar</span>
+    // The hero follows the theme now, so there is no dark band for the bar to
+    // blend into and no scroll listener needed to leave one.
+    <header className="sticky top-0 z-50 border-b border-border bg-background/95 text-foreground backdrop-blur">
+      <div className="container mx-auto container-padding">
+        <div className="flex h-16 items-center justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <LogoMark className="h-7 w-7" />
+            <span className="micro-label text-base font-normal tracking-[1px]">
+              PawnStaar
+            </span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            {isLoggedIn &&
-              navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="text-gray-600 hover:text-primary transition-colors"
-                >
-                  {item.label}
-                </Link>
-              ))}
-          </div>
+          {/*
+            Nav items are always visible, logged in or not. Hiding them behind
+            auth meant a first-time visitor could not see what the product
+            contained — the single worst thing the old header did.
+          */}
+          <nav className="hidden items-center gap-9 md:flex">
+            {NAV_ITEMS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="micro-label transition-opacity duration-200 ease-editorial hover:opacity-60"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
 
-          {/* Desktop Auth */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden items-center gap-2 md:flex">
+            <ThemeToggle />
             {isLoggedIn ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src="/placeholder.svg?height=32&width=32" alt="User" />
+                  <Button variant="ghost" size="icon" aria-label="Account menu">
+                    <Avatar className="h-7 w-7">
+                      <AvatarImage src="/placeholder-user.jpg" alt="" />
                       <AvatarFallback>U</AvatarFallback>
                     </Avatar>
                   </Button>
@@ -68,7 +87,7 @@ export function Navbar() {
                   <DropdownMenuItem asChild>
                     <Link href="/dashboard" className="flex items-center">
                       <User className="mr-2 h-4 w-4" />
-                      Profile
+                      Dashboard
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -85,48 +104,79 @@ export function Navbar() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div className="flex items-center space-x-2">
+              <>
                 <Button variant="ghost" asChild>
-                  <Link href="/login">Sign In</Link>
+                  <Link href="/login">Sign in</Link>
                 </Button>
-              </div>
+                {/* A solid, visible primary action — the old one was a ghost
+                    button with no fill until hover, which never fires on touch. */}
+                <Button variant="solid" asChild>
+                  <Link href="/login">Start free</Link>
+                </Button>
+              </>
             )}
           </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden">
-            <Button variant="ghost" size="icon" onClick={() => setIsOpen(!isOpen)}>
-              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          <div className="flex items-center gap-1 md:hidden">
+            <ThemeToggle />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsOpen(!isOpen)}
+              aria-label={isOpen ? "Close menu" : "Open menu"}
+              aria-expanded={isOpen}
+              aria-controls="mobile-menu"
+            >
+              {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </div>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* The mobile sheet now carries the full nav plus a primary CTA. It used
+            to contain a single ghost "Sign In" link and nothing else. */}
         {isOpen && (
-          <div className="md:hidden py-4 border-t border-gray-200">
-            <div className="flex flex-col space-y-4">
-              {isLoggedIn &&
-                navItems.map((item) => (
+          <div id="mobile-menu" className="border-t border-border py-6 md:hidden">
+            <nav className="flex flex-col">
+              {NAV_ITEMS.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="micro-label flex min-h-[44px] items-center border-b border-border"
+                >
+                  {item.label}
+                </Link>
+              ))}
+              {isLoggedIn && (
+                <>
                   <Link
-                    key={item.href}
-                    href={item.href}
-                    className="text-gray-600 hover:text-primary transition-colors"
-                    onClick={() => setIsOpen(false)}
+                    href="/dashboard"
+                    className="micro-label flex min-h-[44px] items-center border-b border-border"
                   >
-                    {item.label}
+                    Dashboard
                   </Link>
-                ))}
-              {!isLoggedIn && (
-                <div className="flex flex-col space-y-2">
-                  <Button variant="ghost" asChild>
-                    <Link href="/login">Sign In</Link>
-                  </Button>
-                </div>
+                  <Link
+                    href="/settings"
+                    className="micro-label flex min-h-[44px] items-center border-b border-border"
+                  >
+                    Settings
+                  </Link>
+                </>
               )}
-            </div>
+            </nav>
+
+            {!isLoggedIn && (
+              <div className="mt-6 flex flex-col gap-3">
+                <Button variant="solid" className="w-full" asChild>
+                  <Link href="/login">Start free</Link>
+                </Button>
+                <Button variant="outline" className="w-full" asChild>
+                  <Link href="/login">Sign in</Link>
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
-    </nav>
+    </header>
   )
 }

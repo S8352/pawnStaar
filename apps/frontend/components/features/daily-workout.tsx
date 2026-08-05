@@ -51,10 +51,10 @@ export function DailyWorkout() {
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-primary">{item.title}</h3>
-                    <p className="text-sm text-gray-600 mb-2">{item.description}</p>
+                    <p className="text-sm text-muted-foreground mb-2">{item.description}</p>
                     <div className="flex items-center gap-2">
                       <Progress value={item.progress} className="flex-1 max-w-[200px]" />
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-muted-foreground">
                         {item.completed}/{item.total}
                       </span>
                     </div>

@@ -1,6 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
 import { Trophy, Target, TrendingUp } from "lucide-react"
 import type { User } from "@/types"
 
@@ -8,52 +7,52 @@ interface ProfileHeaderProps {
   user: User
 }
 
+const STATS = [
+  { icon: Trophy, label: "Current rating", key: "rating" },
+  { icon: Target, label: "Games analysed", key: "gamesAnalyzed" },
+] as const
+
 export function ProfileHeader({ user }: ProfileHeaderProps) {
   return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-          <Avatar className="h-20 w-20">
-            <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-            <AvatarFallback className="text-2xl">{user.name.charAt(0)}</AvatarFallback>
-          </Avatar>
+    <header className="rule flex flex-col gap-8 pb-8 pt-2 md:flex-row md:items-end md:justify-between">
+      <div className="flex items-center gap-5">
+        <Avatar className="h-16 w-16">
+          <AvatarImage src={user.avatar || "/placeholder-user.jpg"} alt="" />
+          <AvatarFallback className="font-display text-xl">
+            {user.name.charAt(0)}
+          </AvatarFallback>
+        </Avatar>
 
-          <div className="flex-1">
-            <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
-              <h1 className="text-2xl font-bold text-pawn-primary">{user.name}</h1>
-              <Badge variant="secondary" className="w-fit">
-                {user.subscription} Member
-              </Badge>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-pawn-accent" />
-                <div>
-                  <p className="text-sm text-gray-600">Current Rating</p>
-                  <p className="font-semibold">{user.rating}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-pawn-accent" />
-                <div>
-                  <p className="text-sm text-gray-600">Games Analyzed</p>
-                  <p className="font-semibold">{user.gamesAnalyzed}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-pawn-accent" />
-                <div>
-                  <p className="text-sm text-gray-600">Improvement</p>
-                  <p className="font-semibold text-green-600">+{user.ratingGain}</p>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div>
+          <Badge variant="secondary" className="mb-3">
+            {user.subscription} member
+          </Badge>
+          <h1 className="font-display text-display-sm leading-none">{user.name}</h1>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Stats read as a row of figures rather than icon-and-label pairs, so
+          the numbers themselves carry the hierarchy. */}
+      <dl className="flex flex-wrap gap-x-10 gap-y-5">
+        {STATS.map((stat) => (
+          <div key={stat.key}>
+            <dt className="micro-label flex items-center gap-2 text-muted-foreground">
+              <stat.icon className="h-4 w-4 text-gold-text" strokeWidth={1.5} />
+              {stat.label}
+            </dt>
+            <dd className="mt-2 font-display text-2xl tabular-nums">{user[stat.key]}</dd>
+          </div>
+        ))}
+        <div>
+          <dt className="micro-label flex items-center gap-2 text-muted-foreground">
+            <TrendingUp className="h-4 w-4 text-gold-text" strokeWidth={1.5} />
+            Improvement
+          </dt>
+          <dd className="mt-2 font-display text-2xl tabular-nums text-success">
+            +{user.ratingGain}
+          </dd>
+        </div>
+      </dl>
+    </header>
   )
 }
