@@ -13,8 +13,8 @@ services:
         condition: service_started
     environment:
       - DATABASE_URL=postgresql://user:password@db/pawnstaar
-      - SUPABASE_URL=https://okklzwqibdfxiynabkjh.supabase.co
-      - SUPABASE_KEY=***REMOVED_SUPABASE_ANON_KEY***
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
       - STOCKFISH_PATH=/usr/games/stockfish
 
   db:
