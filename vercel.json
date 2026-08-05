@@ -5,9 +5,5 @@
       "src": "/api/(.*)",
       "dest": "https://your-backend-url.railway.app/$1"
     }
-  ],
-  "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "https://okklzwqibdfxiynabkjh.supabase.co",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "***REMOVED_SUPABASE_ANON_KEY***"
-  }
+  ]
 }
