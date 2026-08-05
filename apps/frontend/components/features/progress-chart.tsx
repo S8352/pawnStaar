@@ -37,19 +37,19 @@ export function ProgressChart() {
   const getTrendIcon = (trend: string) => {
     switch (trend) {
       case "up":
-        return <TrendingUp className="h-4 w-4 text-green-500" />
+        return <TrendingUp className="h-4 w-4 text-success" />
       case "down":
-        return <TrendingDown className="h-4 w-4 text-red-500" />
+        return <TrendingDown className="h-4 w-4 text-destructive" />
       default:
-        return <Minus className="h-4 w-4 text-gray-500" />
+        return <Minus className="h-4 w-4 text-muted-foreground" />
     }
   }
 
   const getTrendColor = (trend: string, isBlunderRate = false) => {
     if (isBlunderRate) {
-      return trend === "down" ? "text-green-600" : trend === "up" ? "text-red-600" : "text-gray-600"
+      return trend === "down" ? "text-success" : trend === "up" ? "text-destructive" : "text-muted-foreground"
     }
-    return trend === "up" ? "text-green-600" : trend === "down" ? "text-red-600" : "text-gray-600"
+    return trend === "up" ? "text-success" : trend === "down" ? "text-destructive" : "text-muted-foreground"
   }
 
   return (
@@ -78,7 +78,7 @@ export function ProgressChart() {
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">
+                    <span className="text-muted-foreground">
                       Current: {metric.current}
                       {metric.name === "Opening Accuracy" || metric.name === "Endgame Score"
                         ? "%"
@@ -86,7 +86,7 @@ export function ProgressChart() {
                           ? "%"
                           : ""}
                     </span>
-                    <span className="text-gray-600">{metric.progress}%</span>
+                    <span className="text-muted-foreground">{metric.progress}%</span>
                   </div>
                   <Progress value={metric.progress} className="h-2" />
                 </div>

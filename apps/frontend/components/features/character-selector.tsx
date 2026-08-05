@@ -68,22 +68,22 @@ export function CharacterSelector({ selectedCharacter, onCharacterChange }: Char
   }, [])
 
   const getIntensityColor = (intensity: number) => {
-    if (intensity >= 4) return "bg-red-500"
-    if (intensity >= 3) return "bg-orange-500"
-    if (intensity >= 2) return "bg-yellow-500"
-    return "bg-green-500"
+    if (intensity >= 4) return "bg-destructive"
+    if (intensity >= 3) return "bg-warning"
+    if (intensity >= 2) return "bg-warning"
+    return "bg-success"
   }
 
   const getToneIcon = (tone: string) => {
     switch (tone) {
       case 'confident':
-        return <Zap className="h-4 w-4 text-yellow-500" />
+        return <Zap className="h-4 w-4 text-warning" />
       case 'sarcastic':
-        return <MessageSquare className="h-4 w-4 text-orange-500" />
+        return <MessageSquare className="h-4 w-4 text-warning" />
       case 'strategic':
-        return <Users className="h-4 w-4 text-blue-500" />
+        return <Users className="h-4 w-4 text-gold-text" />
       default:
-        return <Users className="h-4 w-4 text-gray-500" />
+        return <Users className="h-4 w-4 text-muted-foreground" />
     }
   }
 
@@ -124,7 +124,7 @@ export function CharacterSelector({ selectedCharacter, onCharacterChange }: Char
             className={`p-4 border rounded-lg cursor-pointer transition-all ${
               selectedCharacter === character.id
                 ? 'border-pawn-primary bg-pawn-primary/5'
-                : 'border-gray-200 hover:border-gray-300'
+                : 'border-border hover:border-border'
             }`}
             onClick={() => onCharacterChange(character.id)}
           >
@@ -135,11 +135,11 @@ export function CharacterSelector({ selectedCharacter, onCharacterChange }: Char
                   <h3 className="font-semibold text-lg">{character.name}</h3>
                   <div className="flex items-center gap-1">
                     <div className={`w-2 h-2 rounded-full ${getIntensityColor(character.intensity)}`}></div>
-                    <span className="text-xs text-gray-500">{character.intensity}/5</span>
+                    <span className="text-xs text-muted-foreground">{character.intensity}/5</span>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-2">{character.description}</p>
-                <div className="p-2 bg-gray-50 rounded text-sm italic">
+                <p className="text-sm text-muted-foreground mb-2">{character.description}</p>
+                <div className="p-2 bg-muted rounded text-sm italic">
                   "{character.sample_roast}"
                 </div>
               </div>

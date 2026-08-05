@@ -152,12 +152,12 @@ export function GameImport({ onImportSuccess }: { onImportSuccess: () => void })
             <div className="space-y-3">
               <div className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-green-500 rounded flex items-center justify-center">
+                  <div className="w-8 h-8 bg-green-700 flex items-center justify-center">
                     <span className="text-white text-xs font-bold">C</span>
                   </div>
                   <div>
                     <p className="font-medium">Chess.com</p>
-                    <p className="text-sm text-gray-600">Connected</p>
+                    <p className="text-sm text-muted-foreground">Connected</p>
                   </div>
                 </div>
                 <Button size="sm" variant="outline" onClick={() => handleSync("Chess.com")} disabled={isLoading}>
@@ -168,12 +168,12 @@ export function GameImport({ onImportSuccess }: { onImportSuccess: () => void })
 
               <div className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center">
+                  <div className="w-8 h-8 bg-blue-700 flex items-center justify-center">
                     <span className="text-white text-xs font-bold">L</span>
                   </div>
                   <div>
                     <p className="font-medium">Lichess</p>
-                    <p className="text-sm text-gray-600">Not connected</p>
+                    <p className="text-sm text-muted-foreground">Not connected</p>
                   </div>
                 </div>
                 <Button size="sm" variant="outline">
@@ -196,7 +196,10 @@ export function GameImport({ onImportSuccess }: { onImportSuccess: () => void })
                   onChange={(e) => setPgn(e.target.value)}
                 />
               </div>
-              <Button onClick={handlePGNUpload} className="w-full bg-pawn-primary hover:bg-pawn-primary/90" disabled={isLoading}>
+              {/* Was `bg-pawn-primary`, an undefined colour. tailwind-merge
+                  stripped the variant's real background in its favour, leaving
+                  a fully transparent button. */}
+              <Button onClick={handlePGNUpload} variant="solid" className="w-full" disabled={isLoading}>
                 {isLoading ? <Upload className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
                 Upload & Analyze
               </Button>

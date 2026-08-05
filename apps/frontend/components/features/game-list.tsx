@@ -5,7 +5,8 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Eye, Calendar, Clock, User, RefreshCw } from "lucide-react"
+import { Eye, Calendar, Clock, User, RefreshCw, Inbox } from "lucide-react"
+import { EmptyState, CardSkeleton } from "@/components/ui/empty-state"
 import { useToast } from "@/hooks/use-toast"
 
 // Matches the backend `schemas.Game`
@@ -98,9 +99,13 @@ export function GameList({ refreshKey }: { refreshKey: number }) {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="text-center">Loading games...</div>
+          <CardSkeleton />
         ) : games.length === 0 ? (
-          <div className="text-center text-gray-500">No games imported yet.</div>
+          <EmptyState
+            icon={Inbox}
+            title="No games yet"
+            description="Sync a Chess.com or Lichess account, or paste a PGN, and the first analysis lands within a minute."
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {games.map((game) => {
@@ -148,7 +153,7 @@ export function GameList({ refreshKey }: { refreshKey: number }) {
                         <div className="text-sm space-y-1">
                           <p><span className="font-medium text-destructive">{game.analysis_data.blunders}</span> Blunders</p>
                           <p><span className="font-medium text-warning">{game.analysis_data.mistakes}</span> Mistakes</p>
-                          <p><span className="font-medium text-yellow-500">{game.analysis_data.inaccuracies}</span> Inaccuracies</p>
+                          <p><span className="font-medium text-warning">{game.analysis_data.inaccuracies}</span> Inaccuracies</p>
                         </div>
                       </div>
                     )}

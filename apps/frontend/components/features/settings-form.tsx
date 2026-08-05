@@ -126,7 +126,7 @@ export function SettingsForm() {
           </div>
           <div>
             <p className="font-medium">{displayName}</p>
-            {connected && <p className="text-sm text-green-600">Connected</p>}
+            {connected && <p className="text-sm text-success">Connected</p>}
           </div>
         </div>
         
@@ -153,7 +153,7 @@ export function SettingsForm() {
                 disabled={isSearching || !searchInputs[platform].trim()}
               >
                 {isSearching ? (
-                  <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-gray-600 rounded-full" />
+                  <div className="animate-spin h-4 w-4 border-2 border-border border-t-gray-600 rounded-full" />
                 ) : (
                   <Search className="h-4 w-4" />
                 )}
@@ -161,7 +161,7 @@ export function SettingsForm() {
             </div>
             
             {result && (
-              <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded">
+              <div className="flex items-center justify-between p-3 bg-success/10 border border-success/30 rounded">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={result.avatar_url} />
@@ -170,10 +170,10 @@ export function SettingsForm() {
                   <div>
                     <p className="font-medium">{result.username}</p>
                     {result.rating && (
-                      <p className="text-sm text-gray-600">Rating: {result.rating}</p>
+                      <p className="text-sm text-muted-foreground">Rating: {result.rating}</p>
                     )}
                   </div>
-                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <CheckCircle className="h-5 w-5 text-success" />
                 </div>
                 <Button
                   size="sm"
@@ -204,7 +204,7 @@ export function SettingsForm() {
 
         <div className="space-y-4">
           <h3 className="font-semibold text-pawn-primary">Chess Platform Accounts</h3>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             Connect your chess accounts to import games and sync your progress
           </p>
 
@@ -212,13 +212,13 @@ export function SettingsForm() {
             <ProfileSearchCard
               platform="chess_com"
               displayName="Chess.com"
-              color="bg-green-500"
+              color="bg-green-700"
             />
             
             <ProfileSearchCard
               platform="lichess"
               displayName="Lichess"
-              color="bg-blue-500"
+              color="bg-blue-700"
             />
           </div>
         </div>

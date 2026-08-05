@@ -147,7 +147,7 @@ export function LivePlay() {
                   className={`p-4 border rounded-lg cursor-pointer transition-colors ${
                     selectedTimeControl === control.id
                       ? "border-accent bg-accent/5"
-                      : "border-gray-200 hover:border-gray-300"
+                      : "border-border hover:border-border"
                   }`}
                   onClick={() => setSelectedTimeControl(control.id)}
                 >
@@ -160,12 +160,12 @@ export function LivePlay() {
                         <h3 className="font-semibold text-primary">
                           {control.name} ({control.time})
                         </h3>
-                        <p className="text-sm text-gray-600">{control.description}</p>
+                        <p className="text-sm text-muted-foreground">{control.description}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">{control.players}</span>
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">{control.players}</span>
                     </div>
                   </div>
                 </div>
@@ -216,12 +216,12 @@ export function LivePlay() {
             />
             <div className="mt-4 flex justify-between items-center">
               <div className="text-center">
-                <p className="text-sm text-gray-600">You</p>
+                <p className="text-sm text-muted-foreground">You</p>
                 <p className="font-semibold">10:00</p>
               </div>
               <Badge variant="outline">{gameOver ? "Game Over" : `Turn: ${turn === "w" ? "White" : "Black"}`}</Badge>
               <div className="text-center">
-                <p className="text-sm text-gray-600">Opponent</p>
+                <p className="text-sm text-muted-foreground">Opponent</p>
                 <p className="font-semibold">10:00</p>
               </div>
             </div>

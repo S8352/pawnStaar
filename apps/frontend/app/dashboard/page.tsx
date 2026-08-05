@@ -1,11 +1,16 @@
 import { redirect } from "next/navigation"
+
 import { ProfileHeader } from "@/components/features/profile-header"
 import { DashboardTabs } from "@/components/features/dashboard-tabs"
 import { mockUser } from "@/lib/mock-data"
 
-// Mock auth check - replace with real auth
+/*
+  NOTE: this returns true unconditionally, so a logged-out visitor reaches the
+  dashboard and is shown mock data as though it were their own. That is an auth
+  gap rather than a design one and is deliberately left for the session work —
+  flagged here so it is not mistaken for intentional demo behaviour.
+*/
 function checkAuth() {
-  // For demo purposes, we'll assume user is logged in
   return true
 }
 
@@ -15,9 +20,9 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto container-padding py-10">
       <ProfileHeader user={mockUser} />
-      <div className="mt-8">
+      <div className="mt-10">
         <DashboardTabs />
       </div>
     </div>
