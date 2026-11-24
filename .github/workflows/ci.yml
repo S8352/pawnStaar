@@ -16,12 +16,12 @@ jobs:
     - name: Set up pnpm
       uses: pnpm/action-setup@v2
       with:
-        version: 8
+        version: 9
 
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: 18
+        node-version: 20
         cache: 'pnpm'
 
     - name: Install dependencies
@@ -29,6 +29,13 @@ jobs:
 
     - name: Run linters
       run: pnpm --filter frontend lint
+
+    - name: Run tests
+      run: pnpm --filter frontend test
+
+    - name: Run typecheck
+      run: pnpm --filter frontend typecheck
+      continue-on-error: true
 
   backend-tests:
     runs-on: ubuntu-latest
