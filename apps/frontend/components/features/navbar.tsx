@@ -1,5 +1,6 @@
 "use client"
 
+import type React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -16,8 +17,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { LivePulse } from "@/components/wcc/live-pulse"
 
-const NAV_ITEMS = [
+const NAV_ITEMS: { href: string; label: string; adornment?: React.ReactNode }[] = [
+  // The championship leads while it is being played: it is the one thing on
+  // this site that is only true today. `LivePulse` draws nothing unless a game
+  // is actually in progress.
+  { href: "/wcc", label: "WCC Live", adornment: <LivePulse /> },
   { href: "/analysis", label: "Analysis" },
   { href: "/live", label: "Live play" },
   { href: "/plan", label: "The plan" },
@@ -64,9 +70,10 @@ export function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="micro-label transition-opacity duration-200 ease-editorial hover:opacity-60"
+                className="micro-label inline-flex items-center gap-2 transition-opacity duration-200 ease-editorial hover:opacity-60"
               >
                 {item.label}
+                {item.adornment}
               </Link>
             ))}
           </nav>
@@ -141,9 +148,10 @@ export function Navbar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="micro-label flex min-h-[44px] items-center border-b border-border"
+                  className="micro-label flex min-h-[44px] items-center gap-2 border-b border-border"
                 >
                   {item.label}
+                  {item.adornment}
                 </Link>
               ))}
               {isLoggedIn && (
