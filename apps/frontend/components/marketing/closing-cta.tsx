@@ -26,19 +26,19 @@ export function ClosingCTA() {
       <div className="container relative mx-auto container-padding">
         <Reveal stagger className="mx-auto max-w-3xl py-32 text-center md:py-44">
           <h2 className="font-display text-display text-balance">
-            Fifteen minutes.
+            Every move.
             {/* Display-size, so 3:1 applies — see the note in hero.tsx. */}
-            <span className="block text-foreground/55">Starting today.</span>
+            <span className="block text-foreground/55">As it happens.</span>
           </h2>
 
           <p className="mx-auto mt-8 max-w-md text-body text-muted-foreground">
-            Link a chess account and the first analysis is waiting before you finish
-            making coffee.
+            The world title is being decided in Geneva. The board, both clocks and the
+            evaluation, live.
           </p>
 
           <div className="mt-11 flex justify-center">
             <Button size="lg" asChild>
-              <Link href="/login">Start free</Link>
+              <Link href="/wcc">Follow the match</Link>
             </Button>
           </div>
         </Reveal>

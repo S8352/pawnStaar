@@ -15,8 +15,8 @@ interface ChessboardWrapperProps {
   read CSS variables. Square colours are identical in both themes on purpose:
   a board that inverts with the theme is disorienting to play on.
 */
-const LIGHT_SQUARE = "#E4E4DC"
-const DARK_SQUARE = "#3D5A45"
+export const BOARD_LIGHT_SQUARE = "#E4E4DC"
+export const BOARD_DARK_SQUARE = "#3D5A45"
 
 export function ChessboardWrapper({
   position,
@@ -32,8 +32,8 @@ export function ChessboardWrapper({
           return true
         }}
         boardOrientation={boardOrientation}
-        customLightSquareStyle={{ backgroundColor: LIGHT_SQUARE }}
-        customDarkSquareStyle={{ backgroundColor: DARK_SQUARE }}
+        customLightSquareStyle={{ backgroundColor: BOARD_LIGHT_SQUARE }}
+        customDarkSquareStyle={{ backgroundColor: BOARD_DARK_SQUARE }}
         customBoardStyle={{ borderRadius: 0 }}
       />
     </div>

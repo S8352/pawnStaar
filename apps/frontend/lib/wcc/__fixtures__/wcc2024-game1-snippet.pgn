@@ -1,0 +1,39 @@
+[Event "FIDE World Championship Match 2024"]
+[Site "Singapore SGP"]
+[Date "2024.11.25"]
+[Round "1"]
+[White "Gukesh D"]
+[Black "Ding, Liren"]
+[Result "*"]
+[WhiteElo "2783"]
+[WhiteTitle "GM"]
+[WhiteFideId "46616543"]
+[BlackElo "2728"]
+[BlackTitle "GM"]
+[BlackFideId "8603677"]
+[TimeControl "40/7200:1800+30"]
+[Variant "Standard"]
+[ECO "C11"]
+[Opening "French Defense: Classical Variation, Steinitz Variation"]
+[BroadcastName "FIDE World Championship 2024"]
+[BroadcastURL "https://lichess.org/broadcast/fide-world-championship-2024/game-1/G2R2lPcA"]
+[GameURL "https://lichess.org/broadcast/fide-world-championship-2024/game-1/G2R2lPcA/TAq3z9DR"]
+
+1. e4 { [%eval 0.18] [%clk 1:59:56] } 1... e6 { [%eval 0.28] [%clk 1:59:45] } 2. d4 { [%eval 0.28] [%clk 1:59:47] } 2... d5 { [%eval 0.33] [%clk 1:59:39] }
+3. Nf3 { [%eval 0.25] [%clk 1:58:30] } Nf6 { [%eval 0.31] [%clk 1:58:12] } 4. Ng1 { [%eval 0.10] [%clk 1:57:02] } 4... Ng8 { [%eval 0.14] [%clk 1:56:55] }
+5. Nf3 { [%eval 0.22] [%clk 1:56:10] } Nf6 { [%eval 0.27] [%clk 1:55:40] } 6. Nc3 { [%eval 0.24] [%clk 1:54:21] } 6... Be7 { [%eval 0.30] [%clk 1:53:08] }
+7. Bg5 { [%eval 0.26] [%clk 1:52:44] } O-O { [%eval 0.33] [%clk 1:51:19] } 8. e5 { [%eval 0.31] [%clk 1:50:02] } 8... Nfd7 { [%eval 0.35] [%clk 1:48:30] }
+9. Bxe7 { [%eval 0.29] [%clk 1:47:51] } Qxe7 { [%eval 0.34] [%clk 1:46:40] } 10. Bd3 { [%eval 0.30] [%clk 1:45:12] } 10... c5 { [%eval 0.36] [%clk 1:43:55] }
+11. O-O { [%eval 0.32] [%clk 1:42:48] } Nb6 { [%eval 0.38] [%clk 1:41:30] } 12. dxc5 { [%eval #3] [%clk 1:40:17] } 12... Nc6 { [%eval 0.41] [%clk 1:38:52] } *
+
+[Event "FIDE World Championship Match 2024"]
+[Site "Singapore SGP"]
+[Date "2024.11.25"]
+[Round "1"]
+[White "Player 3"]
+[Black "Player 4"]
+[Result "*"]
+[TimeControl "40/7200:1800+30"]
+[GameURL "https://lichess.org/broadcast/fide-world-championship-2024/game-1/G2R2lPcA/airZH7mK"]
+
+1. d4 { [%clk 0:30:00] } d5 { [%clk 0:29:50] } *

@@ -1,5 +1,6 @@
 "use client"
 
+import type React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -16,12 +17,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { LivePulse } from "@/components/wcc/live-pulse"
 
-const NAV_ITEMS = [
+const NAV_ITEMS: { href: string; label: string; adornment?: React.ReactNode }[] = [
+  // The championship leads while it is being played: it is the one thing on
+  // this site that is only true today. `LivePulse` draws nothing unless a game
+  // is actually in progress.
+  { href: "/wcc", label: "WCC Live", adornment: <LivePulse /> },
   { href: "/analysis", label: "Analysis" },
   { href: "/live", label: "Live play" },
   { href: "/plan", label: "The plan" },
-  { href: "/#pricing", label: "Pricing" },
 ]
 
 export function Navbar() {
@@ -64,9 +69,10 @@ export function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="micro-label transition-opacity duration-200 ease-editorial hover:opacity-60"
+                className="micro-label inline-flex items-center gap-2 transition-opacity duration-200 ease-editorial hover:opacity-60"
               >
                 {item.label}
+                {item.adornment}
               </Link>
             ))}
           </nav>
@@ -103,18 +109,7 @@ export function Navbar() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : (
-              <>
-                <Button variant="ghost" asChild>
-                  <Link href="/login">Sign in</Link>
-                </Button>
-                {/* A solid, visible primary action — the old one was a ghost
-                    button with no fill until hover, which never fires on touch. */}
-                <Button variant="solid" asChild>
-                  <Link href="/login">Start free</Link>
-                </Button>
-              </>
-            )}
+            ) : null}
           </div>
 
           <div className="flex items-center gap-1 md:hidden">
@@ -132,8 +127,9 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* The mobile sheet now carries the full nav plus a primary CTA. It used
-            to contain a single ghost "Sign In" link and nothing else. */}
+        {/* The mobile sheet carries the full nav. While the site runs without
+            accounts there is no sign-in or sign-up action here or in the
+            desktop bar; the championship link is the call to action. */}
         {isOpen && (
           <div id="mobile-menu" className="border-t border-border py-6 md:hidden">
             <nav className="flex flex-col">
@@ -141,9 +137,10 @@ export function Navbar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="micro-label flex min-h-[44px] items-center border-b border-border"
+                  className="micro-label flex min-h-[44px] items-center gap-2 border-b border-border"
                 >
                   {item.label}
+                  {item.adornment}
                 </Link>
               ))}
               {isLoggedIn && (
@@ -163,17 +160,6 @@ export function Navbar() {
                 </>
               )}
             </nav>
-
-            {!isLoggedIn && (
-              <div className="mt-6 flex flex-col gap-3">
-                <Button variant="solid" className="w-full" asChild>
-                  <Link href="/login">Start free</Link>
-                </Button>
-                <Button variant="outline" className="w-full" asChild>
-                  <Link href="/login">Sign in</Link>
-                </Button>
-              </div>
-            )}
           </div>
         )}
       </div>

@@ -6,7 +6,6 @@ export const mockUser: User = {
   email: "john.doe@example.com",
   avatar: "/placeholder.svg?height=80&width=80",
   rating: 1650,
-  subscription: "Premium",
   gamesAnalyzed: 247,
   ratingGain: 85,
   connectedAccounts: {

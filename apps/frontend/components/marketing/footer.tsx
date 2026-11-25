@@ -14,14 +14,13 @@ const COLUMNS = [
       { href: "/analysis", label: "Analysis" },
       { href: "/live", label: "Live play" },
       { href: "/dashboard", label: "Dashboard" },
-      { href: "/#pricing", label: "Pricing" },
+      { href: "/wcc", label: "WCC Live" },
     ],
   },
   {
     heading: "Learn",
     links: [
       { href: "/plan", label: "The 15-minute plan" },
-      { href: "/login", label: "Create an account" },
     ],
   },
 ]
