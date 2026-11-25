@@ -27,7 +27,6 @@ const NAV_ITEMS: { href: string; label: string; adornment?: React.ReactNode }[] 
   { href: "/analysis", label: "Analysis" },
   { href: "/live", label: "Live play" },
   { href: "/plan", label: "The plan" },
-  { href: "/#pricing", label: "Pricing" },
 ]
 
 export function Navbar() {
@@ -110,18 +109,7 @@ export function Navbar() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : (
-              <>
-                <Button variant="ghost" asChild>
-                  <Link href="/login">Sign in</Link>
-                </Button>
-                {/* A solid, visible primary action — the old one was a ghost
-                    button with no fill until hover, which never fires on touch. */}
-                <Button variant="solid" asChild>
-                  <Link href="/login">Start free</Link>
-                </Button>
-              </>
-            )}
+            ) : null}
           </div>
 
           <div className="flex items-center gap-1 md:hidden">
@@ -139,8 +127,9 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* The mobile sheet now carries the full nav plus a primary CTA. It used
-            to contain a single ghost "Sign In" link and nothing else. */}
+        {/* The mobile sheet carries the full nav. While the site runs without
+            accounts there is no sign-in or sign-up action here or in the
+            desktop bar; the championship link is the call to action. */}
         {isOpen && (
           <div id="mobile-menu" className="border-t border-border py-6 md:hidden">
             <nav className="flex flex-col">
@@ -171,17 +160,6 @@ export function Navbar() {
                 </>
               )}
             </nav>
-
-            {!isLoggedIn && (
-              <div className="mt-6 flex flex-col gap-3">
-                <Button variant="solid" className="w-full" asChild>
-                  <Link href="/login">Start free</Link>
-                </Button>
-                <Button variant="outline" className="w-full" asChild>
-                  <Link href="/login">Sign in</Link>
-                </Button>
-              </div>
-            )}
           </div>
         )}
       </div>

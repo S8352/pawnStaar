@@ -4,7 +4,6 @@ export interface User {
   email: string
   avatar: string
   rating: number
-  subscription: "Free" | "Premium"
   gamesAnalyzed: number
   ratingGain: number
   connectedAccounts: {

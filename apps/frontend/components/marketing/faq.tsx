@@ -14,7 +14,7 @@ const QUESTIONS = [
   },
   {
     q: "What if I don't know my rating?",
-    a: "Play ten rapid games on either platform. That places you within about fifty points, and it costs nothing. The daily plan adjusts itself from there.",
+    a: "Play ten rapid games on either platform. That places you within about fifty points. The daily plan adjusts itself from there.",
   },
   {
     q: "Is fifteen minutes really enough?",

@@ -209,7 +209,7 @@ export default function PlanPage() {
           </p>
           <p className="mt-4 text-body">
             If you do not know your rating, play ten rapid games on Lichess or Chess.com. It will
-            place you within about fifty points, and it costs nothing.
+            place you within about fifty points.
           </p>
         </section>
 

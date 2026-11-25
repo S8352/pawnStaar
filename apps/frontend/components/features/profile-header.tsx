@@ -1,5 +1,4 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import { Trophy, Target, TrendingUp } from "lucide-react"
 import type { User } from "@/types"
 
@@ -24,9 +23,6 @@ export function ProfileHeader({ user }: ProfileHeaderProps) {
         </Avatar>
 
         <div>
-          <Badge variant="secondary" className="mb-3">
-            {user.subscription} member
-          </Badge>
           <h1 className="font-display text-display-sm leading-none">{user.name}</h1>
         </div>
       </div>

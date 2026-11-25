@@ -22,7 +22,7 @@ import { Reveal } from "@/components/ui/reveal"
 */
 
 const STATS = [
-  { value: "40", label: "Games analysed free, monthly" },
+  { value: "14", label: "Championship games, every move live" },
   { value: "15", label: "Minutes a day, that's the plan" },
   { value: "1400", label: "Where blunders stop deciding games" },
 ]
@@ -100,7 +100,7 @@ export function Hero() {
             {/* One primary action. The secondary is a text link, not a rival button. */}
             <div className="mt-11 flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:gap-8">
               <Button size="lg" asChild>
-                <Link href="/login">Start free</Link>
+                <Link href="/wcc">Follow the championship</Link>
               </Button>
               <Link
                 href="/plan"
