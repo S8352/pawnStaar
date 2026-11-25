@@ -35,8 +35,10 @@ export function isRoundFinished(round: LichessRoundSummary): boolean {
 }
 
 /**
- * Lifecycle state of a round. A round that claims a future start but already has
- * moves is treated as live: the moves are the stronger signal.
+ * Lifecycle state of a round. The published start time is the weakest signal:
+ * a round Lichess flags `ongoing`, or one that already has moves, is live even
+ * if `startsAt` is still ahead — rounds start early and published times slip,
+ * and showing a countdown over a game in progress is the worse failure.
  */
 export function deriveRoundState(
   round: LichessRoundSummary,
@@ -44,6 +46,7 @@ export function deriveRoundState(
   now: number,
 ): RoundState {
   if (isRoundFinished(round)) return 'finished'
+  if (round.ongoing === true) return 'live'
 
   const started = games.some((game) => game.plies.length > 0)
   if (round.startsAt != null && round.startsAt > now && !started) return 'upcoming'

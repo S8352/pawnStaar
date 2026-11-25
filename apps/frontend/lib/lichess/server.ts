@@ -23,6 +23,18 @@ const TIMEOUT_MS = 10_000
 const MISSING_TOKEN_WARNING =
   'LICHESS_API_TOKEN is not set; Lichess calls are unauthenticated and heavily rate limited'
 
+/**
+ * Longest the breaker may stay latched, in seconds.
+ *
+ * Lichess itself asks for 60 seconds, but the API sits behind Cloudflare and an
+ * edge or WAF 429 can carry a far larger `Retry-After` — hours, or a delay some
+ * intermediary expresses in milliseconds (`60000`). Latching on that value
+ * verbatim would fail every `/api/wcc/*` request on this instance until the
+ * process restarts, so the window is capped at a few minutes: long enough to
+ * respect a genuine rate limit, short enough to self-heal.
+ */
+const MAX_RATE_LIMIT_SEC = 300
+
 /** Epoch ms until which Lichess has asked us to stop calling. */
 let rateLimitedUntil = 0
 
@@ -85,8 +97,15 @@ export async function lichessFetch(path: string, opts: LichessFetchOptions): Pro
   }
 
   if (res.status === 429) {
-    const retryAfterSec = retryAfterFrom(res)
+    // Clamped once, so the latched window and the figure handed to clients can
+    // never disagree, and neither can exceed the ceiling.
+    const retryAfterSec = Math.min(retryAfterFrom(res), MAX_RATE_LIMIT_SEC)
     rateLimitedUntil = Date.now() + retryAfterSec * 1000
+
+    // Once per latch, not once per short-circuited call. The clamped seconds
+    // only: no token, and no header echoed back wholesale.
+    console.warn(`Lichess rate limited this instance; pausing calls for ${retryAfterSec}s`)
+
     throw new LichessError(429, retryAfterSec)
   }
 

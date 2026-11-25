@@ -78,6 +78,20 @@ describe('deriveRoundState', () => {
     expect(state).toBe('upcoming')
   })
 
+  it('is live when Lichess flags it ongoing even though the published start is still ahead', () => {
+    const state = deriveRoundState(
+      round({ startsAt: NOW + 60_000, ongoing: true }),
+      [{ plies: [], status: '*' }],
+      NOW,
+    )
+    expect(state).toBe('live')
+  })
+
+  it('is finished rather than live when a round is flagged both ongoing and finished', () => {
+    const state = deriveRoundState(round({ ongoing: true, finished: true }), [], NOW)
+    expect(state).toBe('finished')
+  })
+
   it('is live when a move has been played even though startsAt is in the future', () => {
     const state = deriveRoundState(
       round({ startsAt: NOW + 60_000 }),

@@ -14,6 +14,12 @@ import {
 const TOUR_ID = 'qfkdt8mn'
 const ROUND_ID = 'L3j03TZq'
 
+/**
+ * Mirrors `MAX_RATE_LIMIT_SEC` in the fetch layer: the breaker may latch for a
+ * few minutes at most, never for the hours a Cloudflare 429 can ask for.
+ */
+const RATE_LIMIT_CEILING_SEC = 300
+
 const fetchMock = vi.fn<typeof fetch>()
 
 vi.stubGlobal('fetch', fetchMock)
@@ -35,14 +41,19 @@ const rejection = async (promise: Promise<unknown>): Promise<LichessError> => {
   throw new Error('expected the Lichess request to reject')
 }
 
+const warnSpy = vi.spyOn(console, 'warn')
+
 beforeEach(() => {
   fetchMock.mockReset()
   _resetRateLimitForTests()
   vi.stubEnv('LICHESS_API_TOKEN', undefined)
+  warnSpy.mockReset()
+  warnSpy.mockImplementation(() => {})
 })
 
 afterEach(() => {
   vi.unstubAllEnvs()
+  vi.useRealTimers()
 })
 
 describe('lichessFetch', () => {
@@ -112,6 +123,79 @@ describe('lichessFetch', () => {
     expect(second.status).toBe(429)
     expect(second.retryAfterSec).toBeGreaterThan(0)
     expect(second.retryAfterSec).toBeLessThanOrEqual(30)
+  })
+
+  it('leaves a sane Retry-After exactly as Lichess sent it', async () => {
+    vi.useFakeTimers()
+    fetchMock.mockResolvedValue(new Response(null, { status: 429, headers: { 'Retry-After': '30' } }))
+
+    const error = await rejection(lichessFetch('/api/broadcast/anything', { revalidate: 12 }))
+    expect(error.retryAfterSec).toBe(30)
+
+    // The window really is 30 seconds: still shut at 29, open again at 31.
+    vi.advanceTimersByTime(29_000)
+    await rejection(lichessFetch('/api/broadcast/anything', { revalidate: 12 }))
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    vi.advanceTimersByTime(2000)
+    fetchMock.mockResolvedValue(jsonResponse({ ok: true }))
+    await lichessFetch('/api/broadcast/anything', { revalidate: 12 })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('clamps an absurd Retry-After so one bad 429 cannot wedge the instance', async () => {
+    vi.useFakeTimers()
+    // A Cloudflare edge 429, or an intermediary expressing the delay in ms.
+    fetchMock.mockResolvedValue(
+      new Response(null, { status: 429, headers: { 'Retry-After': '60000' } }),
+    )
+
+    const error = await rejection(lichessFetch('/api/broadcast/anything', { revalidate: 12 }))
+    expect(error.retryAfterSec).toBe(RATE_LIMIT_CEILING_SEC)
+
+    // Unclamped this would still be shut 16 hours later; it must reopen at the ceiling.
+    vi.advanceTimersByTime((RATE_LIMIT_CEILING_SEC + 1) * 1000)
+    fetchMock.mockResolvedValue(jsonResponse({ ok: true }))
+    await lichessFetch('/api/broadcast/anything', { revalidate: 12 })
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not turn a zero Retry-After into a full-length outage', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 429, headers: { 'Retry-After': '0' } }))
+
+    const error = await rejection(lichessFetch('/api/broadcast/anything', { revalidate: 12 }))
+    expect(error.retryAfterSec).toBe(0)
+
+    fetchMock.mockResolvedValue(jsonResponse({ ok: true }))
+    await lichessFetch('/api/broadcast/anything', { revalidate: 12 })
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('falls back to the configured window for an unparsable Retry-After', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(null, { status: 429, headers: { 'Retry-After': 'tomorrow' } }),
+    )
+
+    const error = await rejection(lichessFetch('/api/broadcast/anything', { revalidate: 12 }))
+
+    expect(error.retryAfterSec).toBe(POLL.rateLimitedSec)
+  })
+
+  it('logs once when the breaker latches, without the token or the raw header', async () => {
+    vi.stubEnv('LICHESS_API_TOKEN', 'lip_secret')
+    fetchMock.mockResolvedValue(
+      new Response(null, { status: 429, headers: { 'Retry-After': '60000' } }),
+    )
+
+    await rejection(lichessFetch('/api/broadcast/anything', { revalidate: 12 }))
+    await rejection(lichessFetch('/api/broadcast/anything', { revalidate: 12 }))
+
+    expect(warnSpy).toHaveBeenCalledTimes(1)
+    const logged = warnSpy.mock.calls.flat().map(String).join(' ')
+    expect(logged).not.toContain('lip_secret')
+    expect(logged).not.toContain('60000')
   })
 
   it('throws the upstream status for any other failure', async () => {

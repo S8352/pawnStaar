@@ -22,6 +22,9 @@ vi.mock('@/lib/lichess/server', () => ({
 
 const ROUND_ID = 'L3j03TZq'
 
+/** A well-formed Lichess round id belonging to some other broadcast. */
+const FOREIGN_ROUND_ID = 'aaaaaaaa'
+
 const request = (): Request => new Request('http://x')
 
 const roundParams = (roundId: string) => ({ params: Promise.resolve({ roundId }) })
@@ -80,6 +83,10 @@ beforeEach(() => {
   vi.mocked(getRoundSnapshot).mockReset()
   vi.mocked(fetchRoundJson).mockReset()
   vi.mocked(fetchRoundPgn).mockReset()
+
+  // The round routes resolve the requested id against the allow-listed tour
+  // before fetching anything, so every round test needs that list.
+  vi.mocked(getTourSnapshot).mockResolvedValue(tourSnapshot())
 })
 
 describe('GET /api/wcc/tour/[tourId]', () => {
@@ -146,6 +153,16 @@ describe('GET /api/wcc/round/[roundId]', () => {
     expect(getRoundSnapshot).not.toHaveBeenCalled()
   })
 
+  it('refuses a well-formed round id the allow-listed tour does not list, before fetching it', async () => {
+    const res = await roundGet(request(), roundParams(FOREIGN_ROUND_ID))
+
+    expect(res.status).toBe(404)
+    await expect(res.json()).resolves.toEqual({ error: 'not_found' })
+    expect(getRoundSnapshot).not.toHaveBeenCalled()
+    expect(fetchRoundPgn).not.toHaveBeenCalled()
+    expect(getTourSnapshot).toHaveBeenCalledWith(FEATURED_TOUR_ID, { revalidate: REVALIDATE.tour })
+  })
+
   it('refuses a round that belongs to another tournament', async () => {
     vi.mocked(getRoundSnapshot).mockResolvedValue(
       roundSnapshot({ tour: { ...roundSnapshot().tour, id: 'zzzzzzzz' } }),
@@ -207,5 +224,37 @@ describe('GET /api/wcc/round/[roundId]/pgn', () => {
 
     expect(res.status).toBe(404)
     expect(fetchRoundJson).not.toHaveBeenCalled()
+  })
+
+  it('refuses a well-formed round id the allow-listed tour does not list, before fetching it', async () => {
+    const res = await pgnGet(request(), roundParams(FOREIGN_ROUND_ID))
+
+    expect(res.status).toBe(404)
+    await expect(res.json()).resolves.toEqual({ error: 'not_found' })
+    expect(fetchRoundJson).not.toHaveBeenCalled()
+    expect(fetchRoundPgn).not.toHaveBeenCalled()
+    expect(getTourSnapshot).toHaveBeenCalledWith(FEATURED_TOUR_ID, { revalidate: REVALIDATE.tour })
+  })
+
+  it('sanitises a hostile slug instead of letting it into the download header', async () => {
+    vi.mocked(fetchRoundJson).mockResolvedValue(roundJson({ slug: 'game-1"; filename="evil.exe' }))
+    vi.mocked(fetchRoundPgn).mockResolvedValue('[Event "WCC"]\n\n1. e4 *')
+
+    const res = await pgnGet(request(), roundParams(ROUND_ID))
+
+    expect(res.headers.get('Content-Disposition')).toBe(
+      'attachment; filename="wcc2026-game-1-filename-evil-exe.pgn"',
+    )
+  })
+
+  it('falls back to the round id when the slug sanitises away to nothing', async () => {
+    vi.mocked(fetchRoundJson).mockResolvedValue(roundJson({ slug: '../..' }))
+    vi.mocked(fetchRoundPgn).mockResolvedValue('[Event "WCC"]\n\n1. e4 *')
+
+    const res = await pgnGet(request(), roundParams(ROUND_ID))
+
+    expect(res.headers.get('Content-Disposition')).toBe(
+      `attachment; filename="wcc2026-${ROUND_ID}.pgn"`,
+    )
   })
 })

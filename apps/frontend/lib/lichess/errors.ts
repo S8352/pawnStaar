@@ -20,13 +20,18 @@ export class LichessError extends Error {
 /**
  * Seconds to wait from a rate-limited response, from the `Retry-After` header.
  *
- * Lichess sends a delta in seconds; anything missing or unparsable falls back to
- * the configured rate-limit window.
+ * Lichess sends a delta in seconds. A header that is absent or unparsable (an
+ * HTTP-date, say) falls back to the configured rate-limit window, but a header
+ * that is present and reads as zero means zero: treating it as unparsable would
+ * turn "retry now" into a full-length outage. Negative deltas, which no sane
+ * intermediary sends, are floored at zero for the same reason.
  */
 export function retryAfterFrom(res: Response): number {
   const header = res.headers.get('Retry-After')
   if (header === null) return POLL.rateLimitedSec
 
   const seconds = Number.parseInt(header.trim(), 10)
-  return Number.isFinite(seconds) && seconds > 0 ? seconds : POLL.rateLimitedSec
+  if (!Number.isFinite(seconds)) return POLL.rateLimitedSec
+
+  return Math.max(seconds, 0)
 }
