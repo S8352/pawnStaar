@@ -77,6 +77,45 @@ describe('thinkTimeMs', () => {
     expect(thinkTimeMs(afterTimeControl, 2, CLASSICAL)).toBe(50_000)
   })
 
+  it('credits the new phase base time when white crosses the time control', () => {
+    // 40/7200:1800+30 adds 30 minutes once move 40 is complete, so white's
+    // clock after move 41 (ply 81) reads higher than after move 40 (ply 79).
+    // 0:05:00 + 30:00 bonus - 1:00 think + 0:30 increment = 0:34:30.
+    const crossing = [ply(79, 300_000), ply(80, 250_000), ply(81, 2_070_000)]
+    expect(thinkTimeMs(crossing, 2, CLASSICAL)).toBe(60_000)
+  })
+
+  it('credits the new phase base time when black crosses the time control', () => {
+    const crossing = [ply(80, 300_000), ply(81, 2_070_000), ply(82, 2_070_000)]
+    expect(thinkTimeMs(crossing, 2, CLASSICAL)).toBe(60_000)
+  })
+
+  it('credits the bonus whichever ply the broadcast reports it on', () => {
+    // Some feeds show the bonus on the clock for move 40 itself (ply 79)
+    // rather than on move 41. Move 40 is still in the no-increment phase.
+    const crossing = [ply(77, 300_000), ply(78, 250_000), ply(79, 2_040_000)]
+    expect(thinkTimeMs(crossing, 2, CLASSICAL)).toBe(60_000)
+  })
+
+  it('finds a three-phase boundary from the cumulative move counts', () => {
+    const threePhase = parseTimeControl('40/7200:20/3600:900+30')
+    // Phases end after moves 40 and 60, so ply 121 is white's move 61: the
+    // first of the final phase, credited with its 15-minute base time.
+    const crossing = [ply(119, 300_000), ply(120, 250_000), ply(121, 1_170_000)]
+    expect(thinkTimeMs(crossing, 2, threePhase)).toBe(60_000)
+  })
+
+  it('leaves plies well inside the first phase unchanged', () => {
+    expect(thinkTimeMs([ply(39, 600_000), ply(40, 500_000), ply(41, 540_000)], 2, CLASSICAL)).toBe(60_000)
+    // A clock that rises mid-phase is not a time-control bonus.
+    expect(thinkTimeMs([ply(39, 500_000), ply(40, 500_000), ply(41, 600_000)], 2, CLASSICAL)).toBe(0)
+  })
+
+  it('credits no bonus in a single-phase control', () => {
+    const crossing = [ply(79, 300_000), ply(80, 250_000), ply(81, 2_070_000)]
+    expect(thinkTimeMs(crossing, 2, RAPID)).toBe(0)
+  })
+
   it('returns undefined when either clock of the same colour is missing', () => {
     expect(thinkTimeMs([ply(1), ply(2, 7_185_000), ply(3, 7_187_000)], 2, CLASSICAL)).toBeUndefined()
     expect(thinkTimeMs([ply(1, 7_196_000), ply(2, 7_185_000), ply(3)], 2, CLASSICAL)).toBeUndefined()

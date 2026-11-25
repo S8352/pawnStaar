@@ -1,8 +1,11 @@
 /**
  * Replays one game's movetext with chess.js to produce a `ParsedGame`.
  *
- * Unlike chess.js's own `loadPgn`, this keeps one entry per ply, so repeated
- * positions keep their own clock and eval annotations.
+ * The replay steps through one SAN at a time rather than handing the whole
+ * game to chess.js's `loadPgn`, for two reasons: annotations are keyed by ply
+ * rather than by position, which is what the UI indexes by; and stopping at the
+ * first illegal move keeps the legal prefix of a truncated or malformed game
+ * instead of losing all of it.
  */
 import { Chess } from 'chess.js'
 

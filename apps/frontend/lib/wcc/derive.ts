@@ -85,11 +85,48 @@ export function incrementAtPly(tc: TimeControl | null, ply: number): number {
 }
 
 /**
+ * Base time added to a player's clock at a phase boundary around `moveNumber`,
+ * or 0 when this move is not next to one.
+ *
+ * Completing the last move of a phase credits the next phase's base time — 30
+ * minutes under `40/7200:1800+30` — so that colour's clock reads higher after
+ * the boundary than before it. Which ply shows the jump is not fixed: the
+ * bonus can land on the clock reported for the last move of the old phase or
+ * on the first move of the new one, so both sides of the boundary count.
+ * Boundaries come from the parsed phases' cumulative `moves` counts, so
+ * three-phase and single-phase controls are handled by the same code.
+ */
+function phaseBonusMs(tc: TimeControl | null, moveNumber: number): number {
+  if (!tc) return 0
+
+  let movesSoFar = 0
+
+  // The final phase has nothing after it, hence `length - 1`.
+  for (let i = 0; i < tc.phases.length - 1; i++) {
+    const { moves } = tc.phases[i]
+    if (moves === undefined) break
+    movesSoFar += moves
+    if (movesSoFar === moveNumber || movesSoFar === moveNumber - 1) return tc.phases[i + 1].baseMs
+  }
+
+  return 0
+}
+
+/**
  * Time spent on the ply at `index`: the drop in that colour's clock since its
  * previous move, plus the increment credited for this move.
  *
  * The first two plies are measured against the phase base time, which needs a
  * known time control. Returns undefined when either clock is missing.
+ *
+ * At a time-control boundary the clock rises instead of falling, which a plain
+ * subtraction would clamp to 0 — exactly the moves under the most pressure. So
+ * when the measured interval touches a boundary and the clock did rise, the
+ * new phase's base time is credited to the earlier reading first. Residual
+ * ambiguity: a think time longer than the bonus itself would leave the
+ * subtraction positive and go uncorrected, and any other rise at a boundary
+ * (an arbiter adjustment, say) is attributed to the bonus. Both need a clock
+ * that moved the wrong way, so neither can affect an ordinary move.
  */
 export function thinkTimeMs(plies: Ply[], index: number, tc: TimeControl | null): number | undefined {
   const current = plies[index]
@@ -101,8 +138,11 @@ export function thinkTimeMs(plies: Ply[], index: number, tc: TimeControl | null)
 
   const previous = clamp(previousRaw, 0, MAX_CLOCK_MS)
   const latest = clamp(currentRaw, 0, MAX_CLOCK_MS)
+  const spent = previous - latest + incrementAtPly(tc, current.ply)
 
-  return Math.max(0, previous - latest + incrementAtPly(tc, current.ply))
+  if (spent >= 0) return spent
+
+  return Math.max(0, spent + phaseBonusMs(tc, moveNumberOf(current.ply)))
 }
 
 export type Phase = 'no-increment' | 'increment' | 'single'

@@ -161,6 +161,14 @@ export function tokenizeMovetext(movetext: string): PgnToken[] {
       continue
     }
 
+    // A `$` with no digits after it: a NAG split across two stream chunks, or
+    // malformed input. `WORD_BREAK_RE` stops the word scan on `$`, so without
+    // this branch the scan below would make no progress at all.
+    if (char === '$') {
+      index++
+      continue
+    }
+
     if (char >= '0' && char <= '9') {
       const moveNumber = MOVE_NUMBER_RE.exec(rest)
       if (moveNumber) {
@@ -176,6 +184,15 @@ export function tokenizeMovetext(movetext: string): PgnToken[] {
 
     let end = index
     while (end < length && !WORD_BREAK_RE.test(movetext[end])) end++
+
+    if (end === index) {
+      // The character at `index` is a word break that no branch above consumed.
+      // Dropping it guarantees forward progress for every input, so no future
+      // branch can reintroduce the infinite loop a bare `$` once caused.
+      index++
+      continue
+    }
+
     const san = movetext.slice(index, end).replace(/[!?]+$/, '')
     index = end
 

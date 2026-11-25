@@ -3,6 +3,8 @@ import { readFileSync } from 'node:fs'
 import { Chess } from 'chess.js'
 import { describe, expect, it } from 'vitest'
 
+import { START_FEN } from '@/lib/wcc/fen'
+
 import { gameIdFromUrl, parseGame, parseRoundPgn, splitPgnGames } from '../index'
 
 const fixture = (name: string): string =>
@@ -150,6 +152,65 @@ describe('parseGame token handling', () => {
   it('never throws for arbitrary input', () => {
     expect(() => parseGame('')).not.toThrow()
     expect(() => parseGame('not a pgn at all }{)(')).not.toThrow()
+
+    const empty = parseGame('')
+    expect(empty.plies).toEqual([])
+    expect(empty.result).toBe('*')
+    expect(empty.id).toBeNull()
+    expect(empty.tags).toEqual({})
+    expect(empty.initialFen).toBe(START_FEN)
+    expect(empty.pgn).toBe('')
+    expect(empty.issues.map((issue) => issue.code)).toEqual(['bad_tags'])
+
+    const junk = parseGame('not a pgn at all }{)(')
+    expect(junk.plies).toEqual([])
+    expect(junk.result).toBe('*')
+    expect(junk.id).toBeNull()
+    expect(junk.initialFen).toBe(START_FEN)
+    expect(junk.pgn).toBe('not a pgn at all }{)(')
+    expect(junk.issues.map((issue) => issue.code)).toEqual(['bad_tags', 'illegal_move'])
+  })
+})
+
+describe('parseGame result handling', () => {
+  const finished = (resultTag: string, terminal: string): string =>
+    ['[White "A"]', '[Black "B"]', `[Result "${resultTag}"]`, '', `1. e4 e5 2. Nf3 Nc6 ${terminal}`].join('\n')
+
+  it('reads a drawn game, lexing "1/2-1/2" as a result and not as move number 1', () => {
+    const game = parseGame(finished('1/2-1/2', '1/2-1/2'))
+    expect(game.result).toBe('1/2-1/2')
+    expect(game.plies.map((p) => p.san)).toEqual(['e4', 'e5', 'Nf3', 'Nc6'])
+    expect(game.issues).toEqual([])
+  })
+
+  it('reads a win for white', () => {
+    const game = parseGame(finished('1-0', '1-0'))
+    expect(game.result).toBe('1-0')
+    expect(game.plies).toHaveLength(4)
+    expect(game.issues).toEqual([])
+  })
+
+  it('reads a win for black', () => {
+    const game = parseGame(finished('0-1', '0-1'))
+    expect(game.result).toBe('0-1')
+    expect(game.issues).toEqual([])
+  })
+
+  it('takes the result from the movetext when there is no Result tag', () => {
+    const game = parseGame(['[White "A"]', '[Black "B"]', '', '1. e4 e5 1/2-1/2'].join('\n'))
+    expect(game.result).toBe('1/2-1/2')
+    expect(game.plies.map((p) => p.san)).toEqual(['e4', 'e5'])
+    expect(game.issues).toEqual([])
+  })
+
+  it('prefers the Result tag over a terminal token that disagrees', () => {
+    expect(parseGame(finished('1-0', '1/2-1/2')).result).toBe('1-0')
+    expect(parseGame(finished('0-1', '*')).result).toBe('0-1')
+  })
+
+  it('falls back to the terminal token when the Result tag is not a valid result', () => {
+    expect(parseGame(finished('?', '1/2-1/2')).result).toBe('1/2-1/2')
+    expect(parseGame(finished('', '0-1')).result).toBe('0-1')
   })
 })
 
