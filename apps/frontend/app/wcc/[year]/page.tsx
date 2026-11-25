@@ -1,8 +1,8 @@
 import { notFound, redirect } from "next/navigation"
 
 import { FEATURED_TOUR_ID, REVALIDATE, WCC_YEAR } from "@/lib/wcc/config"
-import { gameNumberOf, getTourSnapshot, pickCurrentRound } from "@/lib/wcc/snapshot"
 import { gameHref, tiebreaksHref } from "@/lib/wcc/routes"
+import { gameNumberOf, getTourSnapshot, pickCurrentRound } from "@/lib/wcc/snapshot"
 
 /*
   `/wcc/2026` sends a visitor to whatever is worth watching right now: the game
