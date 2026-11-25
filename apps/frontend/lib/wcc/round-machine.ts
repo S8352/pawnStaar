@@ -12,6 +12,7 @@
  */
 import { BACKOFF_MS, POLL } from '@/lib/wcc/config'
 import type {
+  LichessRoundSummary,
   ParsedGame,
   RoundConnectionStatus,
   RoundSnapshot,
@@ -25,15 +26,25 @@ import { mergeParsedIntoGame } from './merge-live'
 /** Consecutive poll failures before the round is reported as broken. */
 const FAILURES_BEFORE_ERROR = 5
 
+/**
+ * Consecutive tour-poll failures before an upcoming round admits it is blind.
+ * At `POLL.upcomingMs` apiece this is a few minutes of hearing nothing.
+ */
+const TOUR_FAILURES_BEFORE_ERROR = 3
+
 /** Fraction of the backoff the jitter may add or subtract. */
 const JITTER = 0.2
 
 export interface RoundMachineState {
   status: RoundConnectionStatus
   transport: WccTransport
+  /** The freshest round summary seen, so `startsAt` and `ongoing` stay current. */
+  round: LichessRoundSummary | null
   games: WccGame[]
   version: string | null
   consecutiveFailures: number
+  /** Consecutive failures of the tour poll, which is a different loop. */
+  tourFailures: number
   backoffIndex: number
   /** Epoch ms the rate limit expires at, while one is in force. */
   retryUntil: number | null
@@ -55,14 +66,18 @@ export type RoundMachineEvent =
   | { type: 'failure'; status: number; code: string; now: number }
   /** The round's lifecycle as the tour route or a start-time timer sees it. */
   | { type: 'round-state'; state: RoundState }
+  /** A tour poll that did not answer. Reported, never acted on. */
+  | { type: 'tour-failure'; status: number; code: string }
 
 export function initialRoundMachine(): RoundMachineState {
   return {
     status: 'idle',
     transport: 'stream',
+    round: null,
     games: [],
     version: null,
     consecutiveFailures: 0,
+    tourFailures: 0,
     backoffIndex: 0,
     retryUntil: null,
     lastUpdatedAt: null,
@@ -104,6 +119,7 @@ const plyCount = (game: WccGame | undefined): number => game?.plies.length ?? 0
 /** What a round-trip that worked clears: the retry ladder and the last error. */
 const recovered = {
   consecutiveFailures: 0,
+  tourFailures: 0,
   backoffIndex: 0,
   retryUntil: null,
   error: null,
@@ -118,13 +134,17 @@ const recovered = {
  */
 const stumble = (state: RoundMachineState): Pick<
   RoundMachineState,
-  'consecutiveFailures' | 'backoffIndex' | 'transport'
+  'consecutiveFailures' | 'backoffIndex' | 'transport' | 'retryUntil'
 > => {
   const consecutiveFailures = state.consecutiveFailures + 1
 
   return {
     consecutiveFailures,
     backoffIndex: Math.min(consecutiveFailures - 1, BACKOFF_MS.length - 1),
+    // The attempt the rate-limit window was holding back has now been made,
+    // and failed. Leaving the window set would strand a countdown that never
+    // counts down and a re-render every second for the life of the page.
+    retryUntil: null,
     // A stream that keeps dying is not worth reopening: poll for the rest of
     // the session instead.
     transport:
@@ -148,6 +168,7 @@ export function reduceRound(
         ...initialRoundMachine(),
         status: statusFor(snapshot.state, 'connecting'),
         transport,
+        round: snapshot.round,
         games: snapshot.games,
         version: snapshot.version,
         lastUpdatedAt: snapshot.fetchedAt,
@@ -194,9 +215,21 @@ export function reduceRound(
     case 'snapshot': {
       const { snapshot } = event
 
-      // Same version means the same PGN: the games on screen are already it.
+      // Same version means the same PGN, so the games on screen are already it
+      // and keep their identity — but everything around them still moves. A
+      // classical game thinks for minutes between moves, and the move that ends
+      // a round is already in the PGN when Lichess flips the round to finished,
+      // so this is the ordinary path, not the quiet one: the status and the
+      // round summary are recomputed here exactly as below. Only the moves, and
+      // therefore `lastMoveObservedAt`, are left alone.
       if (snapshot.version === state.version) {
-        return { ...state, ...recovered, lastUpdatedAt: event.now }
+        return {
+          ...state,
+          ...recovered,
+          status: statusFor(snapshot.state, 'live'),
+          round: snapshot.round,
+          lastUpdatedAt: event.now,
+        }
       }
 
       const lastMoveObservedAt = { ...state.lastMoveObservedAt }
@@ -211,6 +244,7 @@ export function reduceRound(
         ...state,
         ...recovered,
         status: statusFor(snapshot.state, 'live'),
+        round: snapshot.round,
         games: snapshot.games,
         version: snapshot.version,
         lastUpdatedAt: event.now,
@@ -246,22 +280,79 @@ export function reduceRound(
     }
 
     case 'round-state': {
+      // Something answered for the round's lifecycle, so whatever the tour poll
+      // was failing with is behind us. Safe to clear the error here because the
+      // only path that reports through this event is the tour poll: while a
+      // round is actually running it is the stream or the round poll that
+      // reports, and neither dispatches `round-state`.
+      const base =
+        state.tourFailures === 0 && state.error === null
+          ? state
+          : { ...state, tourFailures: 0, error: null }
+
       if (event.state === 'finished') {
-        return state.status === 'finished' ? state : { ...state, status: 'finished' }
+        // Nothing is left to attempt, so no retry window may outlive the round:
+        // a stale one keeps a countdown on screen and a clock ticking behind it.
+        return base.status === 'finished' && base.retryUntil === null
+          ? base
+          : { ...base, status: 'finished', retryUntil: null }
       }
 
       if (event.state === 'upcoming') {
-        return state.status === 'upcoming' ? state : { ...state, status: 'upcoming' }
+        return base.status === 'upcoming' ? base : { ...base, status: 'upcoming' }
       }
 
       // A round going live only matters to a machine that was waiting for it;
       // one already streaming must not be interrupted.
-      return state.status === 'upcoming' ? { ...state, status: 'connecting' } : state
+      return base.status === 'upcoming' ? { ...base, status: 'connecting' } : base
+    }
+
+    case 'tour-failure': {
+      const tourFailures = state.tourFailures + 1
+
+      // One tour hiccup is not worth reporting: an upcoming round has nothing on
+      // screen to spoil. A tour route that keeps failing is, because it is the
+      // only thing that reports a round starting, and staying silent there is a
+      // countdown running over a game already in progress.
+      //
+      // Reported without touching `status`, which would flip the hook's
+      // lifecycle and open a stream on a round that has not started, and
+      // without touching the round's own failure ladder or transport, which
+      // belong to a different loop.
+      return tourFailures < TOUR_FAILURES_BEFORE_ERROR
+        ? { ...state, tourFailures }
+        : { ...state, tourFailures, error: { status: event.status, code: event.code } }
     }
 
     default:
       return state
   }
+}
+
+/**
+ * Whether the round itself is gone for good: our own round route answered 404
+ * and the machine gave up on it.
+ *
+ * Deliberately narrower than "the last error was a 404". A 404 from the *tour*
+ * route is a different thing entirely — that route is only how an upcoming
+ * round hears that it started — and must not stop the round.
+ */
+export function isRoundGone(state: RoundMachineState): boolean {
+  return state.status === 'error' && state.error?.status === 404
+}
+
+/**
+ * Whether a round's announced start has arrived, by the local clock alone.
+ *
+ * The tour route is the only thing that *reports* an upcoming round going live,
+ * so a caller that waits for it has handed a failing network the power to keep a
+ * countdown running over a game already being played. The start time needs no
+ * network.
+ */
+export function isStartDue(round: LichessRoundSummary | null, now: number): boolean {
+  const startsAt = round?.startsAt
+
+  return startsAt != null && startsAt - POLL.streamOpenBeforeStartMs <= now
 }
 
 /** Backoff rung, spread by ±20% so reconnects do not arrive in lockstep. */
@@ -279,7 +370,7 @@ export function nextDelayMs(
   random: () => number = Math.random,
 ): number | null {
   if (state.status === 'finished') return null
-  if (state.error?.status === 404) return null
+  if (isRoundGone(state)) return null
 
   if (state.retryUntil !== null && state.retryUntil > now) return state.retryUntil - now
 
@@ -289,9 +380,14 @@ export function nextDelayMs(
     return withJitter(BACKOFF_MS[Math.min(state.backoffIndex, BACKOFF_MS.length - 1)], random)
   }
 
-  if (state.status === 'live' && state.transport === 'poll') return POLL.liveMs
+  // Deliberately not conditioned on the status. A poll loop that stops is a
+  // board that stops, silently and with nothing on screen to say so, and the
+  // only two statuses allowed to stop it are the ones handled above. Anything
+  // else — `connecting` held over by a poll that brought no new moves, or a
+  // status a later change introduces — keeps asking.
+  if (state.transport === 'poll') return POLL.liveMs
 
-  // A stream delivers on its own schedule, and a first poll or a first stream
-  // is made as soon as the caller gets here.
+  // A stream delivers on its own schedule, and a first stream is opened as soon
+  // as the caller gets here.
   return null
 }

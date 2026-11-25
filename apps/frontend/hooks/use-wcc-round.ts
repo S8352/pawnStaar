@@ -16,6 +16,8 @@ import { WccApiError, fetchRoundSnapshot, fetchTourSnapshot } from '@/lib/wcc/cl
 import { POLL } from '@/lib/wcc/config'
 import {
   initialRoundMachine,
+  isRoundGone,
+  isStartDue,
   nextDelayMs,
   reduceRound,
   type RoundMachineEvent,
@@ -57,12 +59,24 @@ export interface UseWccRoundResult {
 const configuredTransport = (): WccTransport =>
   process.env.NEXT_PUBLIC_WCC_TRANSPORT === 'poll' ? 'poll' : 'stream'
 
+/**
+ * How often a streaming round re-checks its own lifecycle against the tour.
+ *
+ * The PGN stream never says "the round is over". Lichess simply stops sending
+ * and eventually closes the idle connection, which is indistinguishable from a
+ * drop — so without this the hook would reconnect, be re-sent every game, and
+ * be closed again for as long as the tab stayed open, with the status chip
+ * alternating and `finished` never reached. Deliberately slow: this is a
+ * lifecycle check, not a data path.
+ */
+const ROUND_WATCHDOG_MS = 60_000
+
 /** Which transport, if any, the effect should be running right now. */
 type Lifecycle = 'off' | 'upcoming' | 'round'
 
 const lifecycleOf = (state: RoundMachineState): Lifecycle => {
   // A finished round has nothing left to say, and a round that 404s never will.
-  if (state.status === 'finished' || state.error?.status === 404) return 'off'
+  if (state.status === 'finished' || isRoundGone(state)) return 'off'
   if (state.status === 'upcoming') return 'upcoming'
 
   return 'round'
@@ -85,9 +99,7 @@ const roundStateOf = (round: LichessRoundSummary, now: number): RoundState => {
 
   // Open the stream a little before the announced start: the first moves
   // sometimes beat the `ongoing` flag.
-  if (round.startsAt !== undefined && round.startsAt - POLL.streamOpenBeforeStartMs <= now) {
-    return 'live'
-  }
+  if (isStartDue(round, now)) return 'live'
 
   return 'upcoming'
 }
@@ -151,6 +163,7 @@ export function useWccRound({
     const controller = new AbortController()
     let stream: RoundStream | undefined
     let timer: ReturnType<typeof setTimeout> | undefined
+    let watchdog: ReturnType<typeof setTimeout> | undefined
     let stopped = false
 
     const scheduleNext = (): void => {
@@ -160,6 +173,13 @@ export function useWccRound({
       if (delay === null) return
 
       timer = setTimeout(attempt, Math.max(0, delay))
+    }
+
+    /** This round as the tour's round list currently has it. */
+    const roundSummary = async (): Promise<LichessRoundSummary | undefined> => {
+      const { rounds } = await fetchTourSnapshot(tourId, controller.signal)
+
+      return rounds.find((round) => round.id === roundId)
     }
 
     const pollRound = async (): Promise<void> => {
@@ -189,18 +209,58 @@ export function useWccRound({
 
     const pollTour = async (): Promise<void> => {
       try {
-        const { rounds } = await fetchTourSnapshot(tourId, controller.signal)
-        const summary = rounds.find((round) => round.id === roundId)
+        const summary = await roundSummary()
 
         if (!stopped && summary !== undefined) {
           apply({ type: 'round-state', state: roundStateOf(summary, Date.now()) })
         }
-      } catch {
-        // An upcoming round has nothing on screen to spoil, so a tour hiccup is
-        // not worth reporting as a round error: ask again next interval.
+      } catch (error) {
+        if (stopped || controller.signal.aborted) return
+
+        // Not a `failure`: that sets `reconnecting`, which would flip the
+        // lifecycle and open a stream on a round that has not started. The
+        // machine counts these and surfaces one once enough have piled up, so a
+        // tour route that keeps dying can no longer do it silently.
+        apply(
+          error instanceof WccApiError
+            ? { type: 'tour-failure', status: error.status, code: error.code }
+            : { type: 'tour-failure', status: 0, code: 'network' },
+        )
       }
 
       scheduleNext()
+    }
+
+    /**
+     * The one thing an open stream cannot tell us: whether the round has ended.
+     * Self-rescheduling, so it keeps asking across reconnects, and it is what
+     * eventually takes the hook to `finished` and shuts everything down.
+     */
+    const checkLifecycle = async (): Promise<void> => {
+      watchdog = undefined
+      if (stopped) return
+
+      try {
+        const summary = await roundSummary()
+
+        if (!stopped && summary !== undefined) {
+          apply({
+            type: 'round-state',
+            state: isRoundFinished(summary) ? 'finished' : 'live',
+          })
+        }
+      } catch {
+        // The stream is the data path and is reporting for itself; this is only
+        // a safety net, so a tour hiccup just means asking again next interval.
+      }
+
+      if (latest.current.status !== 'finished') scheduleWatchdog()
+    }
+
+    const scheduleWatchdog = (): void => {
+      if (stopped) return
+
+      watchdog = setTimeout(() => void checkLifecycle(), ROUND_WATCHDOG_MS)
     }
 
     const attempt = (): void => {
@@ -208,6 +268,15 @@ export function useWccRound({
       if (stopped) return
 
       if (lifecycle === 'upcoming') {
+        // The announced start needs no network, so it is checked before the
+        // tour is asked — on entry and on every tick alike. A tour route that
+        // keeps failing must not be able to hold the page on a countdown over a
+        // game that has already begun.
+        if (isStartDue(latest.current.round, Date.now())) {
+          apply({ type: 'round-state', state: 'live' })
+          return
+        }
+
         void pollTour()
         return
       }
@@ -237,6 +306,9 @@ export function useWccRound({
       })
     }
 
+    // A streaming round has no other way to hear that it ended.
+    if (lifecycle === 'round' && mode === 'stream') scheduleWatchdog()
+
     if (owesWait(latest.current, Date.now())) scheduleNext()
     else attempt()
 
@@ -245,6 +317,7 @@ export function useWccRound({
       controller.abort()
       stream?.close()
       if (timer !== undefined) clearTimeout(timer)
+      if (watchdog !== undefined) clearTimeout(watchdog)
     }
   }, [apply, lifecycle, mode, roundId, tourId, tick])
 
@@ -258,7 +331,9 @@ export function useWccRound({
     machine.status === 'finished' ? 'finished' : machine.status === 'upcoming' ? 'upcoming' : 'live'
 
   return {
-    round: initialData.round,
+    // The freshest summary a poll brought back, not the one the server
+    // rendered: `ongoing`, `startsAt` and `finishedAt` all move during a round.
+    round: machine.round ?? initialData.round,
     tour: initialData.tour,
     games: machine.games,
     state,

@@ -6,6 +6,8 @@ import type { ParsedGame, Ply, RoundSnapshot, WccGame, WccTransport } from '@/ty
 
 import {
   initialRoundMachine,
+  isRoundGone,
+  isStartDue,
   nextDelayMs,
   reduceRound,
   type RoundMachineState,
@@ -80,14 +82,28 @@ const dropped = (state: RoundMachineState, count: number): RoundMachineState =>
     state,
   )
 
+/** Applies `count` tour-poll failures in a row. */
+const tourFailed = (
+  state: RoundMachineState,
+  count: number,
+  status = 502,
+  code = 'lichess_unavailable',
+): RoundMachineState =>
+  Array.from({ length: count }).reduce<RoundMachineState>(
+    (acc) => reduceRound(acc, { type: 'tour-failure', status, code }),
+    state,
+  )
+
 describe('initialRoundMachine', () => {
   it('starts idle on the stream transport with nothing observed', () => {
     expect(initialRoundMachine()).toEqual({
       status: 'idle',
       transport: 'stream',
+      round: null,
       games: [],
       version: null,
       consecutiveFailures: 0,
+      tourFailures: 0,
       backoffIndex: 0,
       retryUntil: null,
       lastUpdatedAt: null,
@@ -226,10 +242,29 @@ describe('reduceRound: game', () => {
 
     expect(next.status).toBe('live')
   })
+
+  it('rolls the board back when the frame is shorter than the one on screen', () => {
+    // An arbiter correcting the board sends a game with fewer plies than the
+    // last frame. Every frame is a complete replacement, so the shorter game
+    // wins — but losing moves is not observing a move.
+    const state = started({ games: [game('aaaaaaaa', { plies: plies(10) })] })
+
+    const next = reduceRound(state, {
+      type: 'game',
+      game: parsed('aaaaaaaa', { plies: plies(8) }),
+      now: AT + 5000,
+    })
+
+    expect(next.games[0].plies).toHaveLength(8)
+    expect(next.games[0].currentFen).toBe('fen-8')
+    expect(next.lastMoveObservedAt.aaaaaaaa).toBe(AT)
+    expect(next.status).toBe('live')
+    expect(next.lastUpdatedAt).toBe(AT + 5000)
+  })
 })
 
 describe('reduceRound: snapshot', () => {
-  it('only touches lastUpdatedAt when the version is unchanged', () => {
+  it('keeps the games it already has when the version is unchanged', () => {
     const state = started({ games: [game('aaaaaaaa', { plies: plies(4) })] })
 
     const next = reduceRound(state, {
@@ -240,6 +275,46 @@ describe('reduceRound: snapshot', () => {
 
     expect(next.lastUpdatedAt).toBe(AT + 5000)
     expect(next.games).toBe(state.games)
+    expect(next.version).toBe('v1')
+    expect(next.lastMoveObservedAt).toEqual({ aaaaaaaa: AT })
+  })
+
+  it('still recomputes the status when the version is unchanged', () => {
+    // A classical game thinks for minutes at a time, so poll after poll comes
+    // back on the same version. If that path skipped the status the machine
+    // would sit on `connecting` for the rest of the game, and `nextDelayMs`
+    // would never schedule another poll.
+    const next = reduceRound(started(), {
+      type: 'snapshot',
+      snapshot: snapshot({ state: 'live', version: 'v1' }),
+      now: AT + 5000,
+    })
+
+    expect(next.status).toBe('live')
+  })
+
+  it('reports a round that finished without its PGN changing', () => {
+    // The last move is already in the PGN when Lichess flips the round to
+    // finished, so the version this arrives on is the one already on screen.
+    const next = reduceRound(started(), {
+      type: 'snapshot',
+      snapshot: snapshot({ state: 'finished', version: 'v1' }),
+      now: AT + 5000,
+    })
+
+    expect(next.status).toBe('finished')
+    expect(next.version).toBe('v1')
+  })
+
+  it('does not call an unchanged version a move', () => {
+    const state = started({ games: [game('aaaaaaaa', { plies: plies(4) })] })
+
+    const next = reduceRound(state, {
+      type: 'snapshot',
+      snapshot: snapshot({ state: 'finished', version: 'v1' }),
+      now: AT + 5000,
+    })
+
     expect(next.lastMoveObservedAt).toEqual({ aaaaaaaa: AT })
   })
 
@@ -298,6 +373,38 @@ describe('reduceRound: snapshot', () => {
     expect(next.backoffIndex).toBe(0)
     expect(next.error).toBeNull()
     expect(next.retryUntil).toBeNull()
+  })
+})
+
+describe('reduceRound: the round summary', () => {
+  it('takes the summary off the initial snapshot', () => {
+    expect(started().round).toEqual(snapshot().round)
+  })
+
+  it('takes the fresh summary off a poll that brought new moves', () => {
+    const round = { ...snapshot().round, ongoing: true, startsAt: AT - 60_000 }
+
+    const next = reduceRound(started(), {
+      type: 'snapshot',
+      snapshot: snapshot({ round, version: 'v2' }),
+      now: AT + 1,
+    })
+
+    expect(next.round).toEqual(round)
+  })
+
+  it('takes the fresh summary off a poll on the version already on screen', () => {
+    // The games did not change but the round around them did: this is how a
+    // finished round first announces itself to a polling client.
+    const round = { ...snapshot().round, finished: true, finishedAt: AT + 1 }
+
+    const next = reduceRound(started(), {
+      type: 'snapshot',
+      snapshot: snapshot({ round, state: 'finished', version: 'v1' }),
+      now: AT + 1,
+    })
+
+    expect(next.round).toEqual(round)
   })
 })
 
@@ -375,6 +482,35 @@ describe('reduceRound: rate-limited', () => {
 
     expect(nextDelayMs(next, AT + 30_000, () => 0.5)).toBe(BACKOFF_MS[0])
   })
+
+  it('spends the window on the attempt that dropped', () => {
+    // The attempt the window was waiting for has now been made and failed, so
+    // the window is gone: leaving it set would show a countdown that never
+    // counts and re-render once a second for the life of the page.
+    const limited = reduceRound(started(), { type: 'rate-limited', retryAfterSec: 30, now: AT })
+
+    const next = reduceRound(limited, { type: 'drop', now: AT + 30_000 })
+
+    expect(next.retryUntil).toBeNull()
+    expect(nextDelayMs(next, AT + 30_000, () => 0.5)).toBe(BACKOFF_MS[0])
+  })
+
+  it('spends the window on the attempt that failed', () => {
+    const limited = reduceRound(started({}, 'poll'), {
+      type: 'rate-limited',
+      retryAfterSec: 30,
+      now: AT,
+    })
+
+    const next = reduceRound(limited, {
+      type: 'failure',
+      status: 502,
+      code: 'lichess_unavailable',
+      now: AT + 30_000,
+    })
+
+    expect(next.retryUntil).toBeNull()
+  })
 })
 
 describe('reduceRound: failure', () => {
@@ -440,6 +576,105 @@ describe('reduceRound: round-state', () => {
 
     expect(reduceRound(state, { type: 'round-state', state: 'upcoming' }).status).toBe('upcoming')
   })
+
+  it('stops the retry countdown when the round ends', () => {
+    const limited = reduceRound(started(), { type: 'rate-limited', retryAfterSec: 30, now: AT })
+
+    const next = reduceRound(limited, { type: 'round-state', state: 'finished' })
+
+    expect(next.status).toBe('finished')
+    expect(next.retryUntil).toBeNull()
+    expect(nextDelayMs(next, AT)).toBeNull()
+  })
+})
+
+describe('reduceRound: tour-failure', () => {
+  it('says nothing about a single tour hiccup', () => {
+    const next = tourFailed(started({ state: 'upcoming' }), 1)
+
+    expect(next.status).toBe('upcoming')
+    expect(next.error).toBeNull()
+  })
+
+  it('surfaces an error once the tour keeps failing', () => {
+    const next = tourFailed(started({ state: 'upcoming' }), 3)
+
+    expect(next.error).toEqual({ status: 502, code: 'lichess_unavailable' })
+  })
+
+  it('does not open a stream on a round that has not started', () => {
+    const next = tourFailed(started({ state: 'upcoming' }), 5)
+
+    expect(next.status).toBe('upcoming')
+    expect(nextDelayMs(next, AT)).toBe(POLL.upcomingMs)
+  })
+
+  it('leaves the round backoff ladder and the transport alone', () => {
+    const next = tourFailed(started({ state: 'upcoming' }), 4)
+
+    expect(next.consecutiveFailures).toBe(0)
+    expect(next.backoffIndex).toBe(0)
+    expect(next.transport).toBe('stream')
+    expect(next.retryUntil).toBeNull()
+  })
+
+  it('keeps asking even when the tour route itself is gone', () => {
+    // A 404 is final for the round route, which has nothing else to say. The
+    // tour route is only how an upcoming round hears that it started, and the
+    // start time is knowable without it.
+    const next = tourFailed(started({ state: 'upcoming' }), 3, 404, 'not_found')
+
+    expect(isRoundGone(next)).toBe(false)
+    expect(nextDelayMs(next, AT)).toBe(POLL.upcomingMs)
+  })
+
+  it('forgets the failures once the tour answers again', () => {
+    const failing = tourFailed(started({ state: 'upcoming' }), 3)
+
+    const next = reduceRound(failing, { type: 'round-state', state: 'upcoming' })
+
+    expect(next.tourFailures).toBe(0)
+    expect(next.error).toBeNull()
+  })
+})
+
+describe('isRoundGone', () => {
+  it('is true once the round route says the round does not exist', () => {
+    const next = reduceRound(started({}, 'poll'), {
+      type: 'failure',
+      status: 404,
+      code: 'not_found',
+      now: AT,
+    })
+
+    expect(isRoundGone(next)).toBe(true)
+  })
+
+  it('is false while the round is merely reconnecting', () => {
+    expect(isRoundGone(dropped(started(), 2))).toBe(false)
+  })
+})
+
+describe('isStartDue', () => {
+  it('is false for a round with no announced start', () => {
+    expect(isStartDue(started().round, AT)).toBe(false)
+  })
+
+  it('is false well before the announced start', () => {
+    const round = { ...snapshot().round, startsAt: AT + POLL.streamOpenBeforeStartMs + 1000 }
+
+    expect(isStartDue(round, AT)).toBe(false)
+  })
+
+  it('is true inside the stream-open window', () => {
+    const round = { ...snapshot().round, startsAt: AT + POLL.streamOpenBeforeStartMs }
+
+    expect(isStartDue(round, AT)).toBe(true)
+  })
+
+  it('is false when there is no round summary at all', () => {
+    expect(isStartDue(null, AT)).toBe(false)
+  })
 })
 
 describe('nextDelayMs', () => {
@@ -466,6 +701,14 @@ describe('nextDelayMs', () => {
     expect(nextDelayMs(reduceRound(started(), { type: 'connected' }), AT)).toBeNull()
   })
 
+  it('keeps a poll loop alive whatever status it is in', () => {
+    // A poll loop that stops is a board that stops. Nothing but a finished or
+    // missing round may return null here, or one unanticipated status silently
+    // ends the broadcast.
+    expect(nextDelayMs(started({}, 'poll'), AT)).toBe(POLL.liveMs)
+    expect(nextDelayMs({ ...started({}, 'poll'), status: 'idle' }, AT)).toBe(POLL.liveMs)
+  })
+
   it('jitters the backoff by a fifth either way', () => {
     const state = dropped(started(), 1)
 
@@ -475,5 +718,50 @@ describe('nextDelayMs', () => {
 
   it('does nothing at all while the machine is idle', () => {
     expect(nextDelayMs(initialRoundMachine(), AT)).toBeNull()
+  })
+})
+
+describe('the poll loop over a classical game', () => {
+  /** Polls `count` times, each answering on the version already on screen. */
+  const polled = (
+    state: RoundMachineState,
+    count: number,
+    overrides: Partial<RoundSnapshot> = {},
+  ): RoundMachineState =>
+    Array.from({ length: count }).reduce<RoundMachineState>(
+      (acc, _, i) =>
+        reduceRound(acc, {
+          type: 'snapshot',
+          snapshot: snapshot({ version: acc.version ?? 'v1', ...overrides }),
+          now: AT + (i + 1) * POLL.liveMs,
+        }),
+      state,
+    )
+
+  it('keeps asking across a long think', () => {
+    // Observed on the live route: four consecutive responses carrying an
+    // identical version while the players thought. Every one of them has to
+    // leave a next poll scheduled.
+    let state = started({}, 'poll')
+
+    for (let i = 1; i <= 4; i += 1) {
+      state = polled(state, 1)
+      expect(nextDelayMs(state, AT + i * POLL.liveMs)).toBe(POLL.liveMs)
+    }
+
+    expect(state.status).toBe('live')
+  })
+
+  it('stops the moment the round is over, PGN unchanged or not', () => {
+    const state = polled(started({}, 'poll'), 4)
+
+    const over = reduceRound(state, {
+      type: 'snapshot',
+      snapshot: snapshot({ state: 'finished', version: 'v1' }),
+      now: AT + 5 * POLL.liveMs,
+    })
+
+    expect(over.status).toBe('finished')
+    expect(nextDelayMs(over, AT + 5 * POLL.liveMs)).toBeNull()
   })
 })
