@@ -5,7 +5,6 @@ import { Download, ExternalLink } from "lucide-react"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MoveList } from "@/components/wcc/move-list"
-import { PhaseBadge } from "@/components/wcc/phase-badge"
 import { cn } from "@/lib/utils"
 import { OFFICIAL_LINKS, VENUE_TIME_ZONE } from "@/lib/wcc/config"
 import { formatInZone, viewerTimeZone } from "@/lib/wcc/time"
@@ -63,10 +62,8 @@ export function CompanionPanel({
       </TabsList>
 
       <TabsContent value="moves">
-        <div className="flex items-center justify-end border-b border-border px-2 py-2">
-          <PhaseBadge ply={ply} timeControl={timeControl} />
-        </div>
-
+        {/* The time-control phase badge lives in the stage, beside the
+            evaluation text; repeating it here showed it twice on a phone. */}
         <MoveList
           plies={game.plies}
           currentPly={ply}
