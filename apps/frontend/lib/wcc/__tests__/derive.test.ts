@@ -1,11 +1,40 @@
 import { describe, expect, it } from 'vitest'
 
-import type { Ply } from '@/types/wcc'
+import { FEATURED_TIME_CONTROL } from '@/lib/wcc/config'
+import type { Ply, TimeControl } from '@/types/wcc'
 
-import { formatEval, incrementAtPly, parseTimeControl, phaseFor, thinkTimeMs, winPct } from '../derive'
+import {
+  formatEval,
+  incrementAtPly,
+  parseProseTimeControl,
+  parseTimeControl,
+  phaseFor,
+  resolveTimeControl,
+  thinkTimeMs,
+  winPct,
+} from '../derive'
 
 const CLASSICAL = parseTimeControl('40/7200:1800+30')
 const RAPID = parseTimeControl('900+10')
+
+/**
+ * The two wordings the FIDE World Championship 2026 broadcast actually
+ * publishes for the control `40/7200:1800+30` encodes: the `TimeControl` tag on
+ * every 2026 game PGN, and the tour's own `info.tc`. Both read from the live
+ * Lichess API on 2026-11-25; neither is the PGN grammar.
+ */
+const PROSE_PGN_TAG = "120'/40m + 30'/end, 30/move from move 41"
+const PROSE_INFO_TC = '120 min / 40 moves + 30 min / rest + 30 sec / move starting 41'
+
+const PROSE_PGN = parseProseTimeControl(PROSE_PGN_TAG)
+const PROSE_INFO = parseProseTimeControl(PROSE_INFO_TC)
+
+const CLASSICAL_PHASES = {
+  phases: [
+    { moves: 40, baseMs: 7_200_000, incMs: 0 },
+    { baseMs: 1_800_000, incMs: 30_000 },
+  ],
+}
 
 const ply = (n: number, clockMs?: number): Ply => ({
   ply: n,
@@ -39,6 +68,99 @@ describe('parseTimeControl', () => {
     expect(parseTimeControl(undefined)).toBeNull()
     expect(parseTimeControl('not a time control')).toBeNull()
   })
+
+  it('stays strict: the wordings the 2026 broadcast sends are not the grammar', () => {
+    expect(parseTimeControl(PROSE_PGN_TAG)).toBeNull()
+    expect(parseTimeControl(PROSE_INFO_TC)).toBeNull()
+  })
+})
+
+describe('parseProseTimeControl', () => {
+  it('parses the TimeControl tag the 2026 broadcast sends', () => {
+    expect(PROSE_PGN).toEqual(CLASSICAL_PHASES)
+  })
+
+  it('parses the tour info.tc wording for the same control', () => {
+    expect(PROSE_INFO).toEqual(CLASSICAL_PHASES)
+  })
+
+  it('agrees with the standard grammar and with the published control', () => {
+    expect(PROSE_PGN).toEqual(CLASSICAL)
+    expect(PROSE_INFO).toEqual(CLASSICAL)
+    expect(PROSE_PGN).toEqual(FEATURED_TIME_CONTROL)
+  })
+
+  it('reads the parts structurally, not as the two known literals', () => {
+    expect(parseProseTimeControl("90'/40m + 30'/end, 30/move from move 41")).toEqual({
+      phases: [
+        { moves: 40, baseMs: 5_400_000, incMs: 0 },
+        { baseMs: 1_800_000, incMs: 30_000 },
+      ],
+    })
+    expect(parseProseTimeControl('100 min / 40 moves + 50 min / rest + 30 sec / move starting 41')).toEqual({
+      phases: [
+        { moves: 40, baseMs: 6_000_000, incMs: 0 },
+        { baseMs: 3_000_000, incMs: 30_000 },
+      ],
+    })
+    // The same slots, with the boundary split off into its own clause.
+    expect(parseProseTimeControl('2 hours, 40 moves + 30 min / rest, 30 sec / move from 41')).toEqual(
+      CLASSICAL_PHASES,
+    )
+  })
+
+  it('accepts a bare base time and a whole-game increment', () => {
+    expect(parseProseTimeControl('90 min')).toEqual({ phases: [{ baseMs: 5_400_000, incMs: 0 }] })
+    expect(parseProseTimeControl('90 min + 30 sec / move')).toEqual({
+      phases: [{ baseMs: 5_400_000, incMs: 30_000 }],
+    })
+  })
+
+  it('returns null for wording it cannot interpret, rather than inventing phases', () => {
+    expect(parseProseTimeControl('blitz')).toBeNull()
+    expect(parseProseTimeControl('some time')).toBeNull()
+    expect(parseProseTimeControl('')).toBeNull()
+    expect(parseProseTimeControl(undefined)).toBeNull()
+    expect(parseProseTimeControl('-')).toBeNull()
+    expect(parseProseTimeControl('?')).toBeNull()
+    expect(parseProseTimeControl('40 moves')).toBeNull()
+    expect(parseProseTimeControl('120 minutes per player, sudden death')).toBeNull()
+  })
+
+  it('refuses to assume a unit it does not recognise or one the wording omits', () => {
+    expect(parseProseTimeControl('120 furlongs / 40 moves + 30 min / rest')).toBeNull()
+    expect(parseProseTimeControl('120 / 40 moves + 30 min / rest')).toBeNull()
+    expect(parseProseTimeControl("120'/40m + 30 furlongs/end")).toBeNull()
+  })
+
+  it('returns null when the increment starts somewhere the phases cannot express', () => {
+    expect(parseProseTimeControl("120'/40m + 30'/end, 30/move from move 31")).toBeNull()
+    expect(parseProseTimeControl("120'/40m + 30'/end, 30/move from move 41 + 10/move")).toBeNull()
+  })
+})
+
+describe('resolveTimeControl', () => {
+  const FALLBACK: TimeControl = { phases: [{ baseMs: 1000, incMs: 0 }] }
+
+  it('prefers the standard grammar over prose and over the fallback', () => {
+    expect(resolveTimeControl('40/7200:1800+30', FALLBACK)).toEqual(CLASSICAL)
+  })
+
+  it('falls back to the prose wordings the broadcast sends', () => {
+    expect(resolveTimeControl(PROSE_PGN_TAG, FALLBACK)).toEqual(CLASSICAL)
+    expect(resolveTimeControl(PROSE_INFO_TC, FALLBACK)).toEqual(CLASSICAL)
+  })
+
+  it('falls back to the caller-supplied control when neither parse succeeds', () => {
+    expect(resolveTimeControl('blitz', FALLBACK)).toBe(FALLBACK)
+    expect(resolveTimeControl(undefined, FALLBACK)).toBe(FALLBACK)
+  })
+
+  it('returns null when nothing parses and no fallback is given', () => {
+    expect(resolveTimeControl('blitz')).toBeNull()
+    expect(resolveTimeControl(undefined)).toBeNull()
+    expect(resolveTimeControl('blitz', null)).toBeNull()
+  })
 })
 
 describe('incrementAtPly', () => {
@@ -53,6 +175,13 @@ describe('incrementAtPly', () => {
   it('gives the same increment throughout a single-phase control', () => {
     expect(incrementAtPly(RAPID, 1)).toBe(10_000)
     expect(incrementAtPly(RAPID, 81)).toBe(10_000)
+  })
+
+  it('gives the same increments on the prose-parsed control the broadcast sends', () => {
+    expect(incrementAtPly(PROSE_PGN, 80)).toBe(0)
+    expect(incrementAtPly(PROSE_PGN, 81)).toBe(30_000)
+    expect(incrementAtPly(PROSE_INFO, 80)).toBe(0)
+    expect(incrementAtPly(PROSE_INFO, 81)).toBe(30_000)
   })
 
   it('gives no increment when the time control is unknown', () => {
@@ -83,6 +212,14 @@ describe('thinkTimeMs', () => {
     // 0:05:00 + 30:00 bonus - 1:00 think + 0:30 increment = 0:34:30.
     const crossing = [ply(79, 300_000), ply(80, 250_000), ply(81, 2_070_000)]
     expect(thinkTimeMs(crossing, 2, CLASSICAL)).toBe(60_000)
+  })
+
+  it('credits the new phase base time on the prose-parsed control too', () => {
+    // Production sends the prose wording, so the move-41 correction has to
+    // fire against that parse, not only against the PGN grammar.
+    const crossing = [ply(79, 300_000), ply(80, 250_000), ply(81, 2_070_000)]
+    expect(thinkTimeMs(crossing, 2, PROSE_PGN)).toBe(60_000)
+    expect(thinkTimeMs(crossing, 2, PROSE_INFO)).toBe(60_000)
   })
 
   it('credits the new phase base time when black crosses the time control', () => {
@@ -140,6 +277,14 @@ describe('phaseFor', () => {
     expect(phaseFor(1, CLASSICAL)).toBe('no-increment')
     expect(phaseFor(80, CLASSICAL)).toBe('no-increment')
     expect(phaseFor(81, CLASSICAL)).toBe('increment')
+  })
+
+  it('reports the same phases for the prose wording the broadcast sends', () => {
+    expect(phaseFor(1, PROSE_PGN)).toBe('no-increment')
+    expect(phaseFor(80, PROSE_PGN)).toBe('no-increment')
+    expect(phaseFor(81, PROSE_PGN)).toBe('increment')
+    expect(phaseFor(1, PROSE_INFO)).toBe('no-increment')
+    expect(phaseFor(81, PROSE_INFO)).toBe('increment')
   })
 })
 
